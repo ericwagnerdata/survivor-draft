@@ -1,0 +1,11 @@
+# OS / OneDrive cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editor
+.vscode/
+*.swp
+
+# build throwaways
+_*.mjs

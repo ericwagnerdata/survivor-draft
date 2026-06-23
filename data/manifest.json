@@ -1,0 +1,20 @@
+{
+  "currentSeason": 50,
+  "seasons": [
+    {
+      "n": 50,
+      "title": "Survivor 50",
+      "drafters": [
+        "Eric",
+        "Kris",
+        "Kelly"
+      ],
+      "tribes": [
+        "Vatu",
+        "Cila",
+        "Kalo"
+      ],
+      "status": "active"
+    }
+  ]
+}
