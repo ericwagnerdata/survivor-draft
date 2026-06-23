@@ -1,4 +1,4 @@
-/* Survivor Draft Pool - styles ported from the draft board */
+/* Survivor Draft - styles ported from the draft board */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -58,13 +58,41 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
   font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; color: var(--gold);
 }
 
+/* Draft board recap (read-only) */
+.draft-board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.draft-col { background: var(--charcoal); border-radius: 6px; overflow: hidden; }
+.draft-col-header {
+  padding: 10px 12px; font-family: 'Cinzel', serif; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; text-align: center; border-bottom: 1px solid var(--ash);
+}
+.draft-col-header.eric  { border-top: 3px solid var(--eric);  color: var(--eric);  }
+.draft-col-header.kris  { border-top: 3px solid var(--kris);  color: var(--kris);  }
+.draft-col-header.kelly { border-top: 3px solid var(--kelly); color: var(--kelly); }
+.draft-col-picks { padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+.draft-pick { display: flex; align-items: center; gap: 7px; padding: 6px; background: var(--smoke); border-radius: 4px; }
+.draft-pick-photo { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; }
+.draft-pick-photo img {
+  width: 115%; height: 115%; object-fit: cover; object-position: center 15%;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+.draft-pick-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.draft-pick-name {
+  font-family: 'Cinzel', serif; font-size: 10px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.draft-pick-info .tribe-badge { align-self: flex-start; }
+.draft-pick-num { font-family: 'Cinzel Decorative', serif; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
 /* Standings leaderboard */
 .standings { display: flex; flex-direction: column; gap: 10px; }
 .standing-row {
   display: flex; align-items: center; gap: 14px;
   background: var(--charcoal); border-radius: 6px; padding: 14px 16px;
   border-left: 4px solid var(--ash);
+  text-decoration: none; color: inherit; transition: background 0.15s, border-color 0.15s;
 }
+.standing-row:hover { background: var(--smoke); }
+.standing-chev { font-family: 'Cinzel', serif; font-size: 22px; color: var(--muted); flex-shrink: 0; }
 .standing-row.eric  { border-left-color: var(--eric);  }
 .standing-row.kris  { border-left-color: var(--kris);  }
 .standing-row.kelly { border-left-color: var(--kelly); }
@@ -170,4 +198,11 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 @media (max-width: 480px) {
   .card-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .card-photo { width: 72px; height: 72px; }
+  /* Keep the 3 draft columns but tighten them so they stay readable on a phone. */
+  .draft-board { gap: 4px; }
+  .draft-col-header { font-size: 10px; padding: 8px 4px; letter-spacing: 0.04em; }
+  .draft-col-picks { padding: 4px; gap: 3px; }
+  .draft-pick { flex-wrap: wrap; gap: 5px; padding: 5px; }
+  .draft-pick-photo { width: 26px; height: 26px; }
+  .draft-pick-name { font-size: 9px; }
 }

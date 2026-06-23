@@ -1,4 +1,4 @@
-# Survivor Draft Pool
+# Survivor Draft
 
 A mobile-friendly web app for tracking a family Survivor fantasy draft across seasons.
 Three drafters (Eric, Kris, Kelly) each draft 8 castaways before the premiere. The app

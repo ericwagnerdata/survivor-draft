@@ -36,6 +36,12 @@ const DataStore = {
     return this.season;
   },
 
+  // True once every player has a non-empty drafter AND a pick.
+  isDrafted() {
+    if (!this.season || !Array.isArray(this.season.players) || this.season.players.length === 0) return false;
+    return this.season.players.every(p => p.drafter && (p.pick || p.pick === 0));
+  },
+
   // True once the season has at least one logged episode.
   hasAired() {
     return !!(this.season && this.season.results

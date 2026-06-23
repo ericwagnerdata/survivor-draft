@@ -1,12 +1,15 @@
 /* app.js - hash routing + rendering for Phase 1 (viewing UI).
-   Routes:
-     #/            or #/standings   -> standings leaderboard
-     #/cast                          -> full cast with tribe + drafter filters
-     #/team/Eric | /Kris | /Kelly    -> one drafter's team in pick order
-   Season selection persists in localStorage and is reloaded on boot. */
+   Season is the first hash segment, so links are shareable:
+     #/<n>/draft                          -> draft board recap (or placeholder if undrafted)
+     #/<n>/standings                      -> standings leaderboard (rows drill into a team)
+     #/<n>/cast                           -> full cast with tribe + drafter filters
+     #/<n>/team/Eric | /Kris | /Kelly     -> one drafter's team in pick order
+   The URL is the source of truth for which season is shown. localStorage only
+   supplies a default season when the URL has none. */
 
 const DRAFTERS = ['Eric', 'Kris', 'Kelly'];
 const TRIBES = ['Vatu', 'Cila', 'Kalo'];
+const VIEWS = ['draft', 'standings', 'cast', 'team'];
 const SEASON_KEY = 'sdp.season';
 
 const view = document.getElementById('view');
@@ -51,6 +54,38 @@ function photoCard(p) {
 
 /* ---- Views ---- */
 
+function renderDraft() {
+  if (!DataStore.isDrafted()) {
+    view.innerHTML = `
+      <div class="section-label">Draft</div>
+      <div class="preseason-banner">Draft has not been run yet for this season.</div>`;
+    return;
+  }
+
+  const columns = DRAFTERS.map(d => {
+    const dc = d.toLowerCase();
+    const picks = DataStore.playersByDrafter(d).map(p => `
+      <div class="draft-pick">
+        <div class="draft-pick-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
+        <div class="draft-pick-info">
+          <div class="draft-pick-name">${esc(p.name)}</div>
+          <span class="tribe-badge ${esc(p.tribe)}">${esc(p.tribe)}</span>
+        </div>
+        <div class="draft-pick-num">#${esc(p.pick)}</div>
+      </div>`).join('');
+    return `
+      <div class="draft-col">
+        <div class="draft-col-header ${dc}">${esc(d)}</div>
+        <div class="draft-col-picks">${picks}</div>
+      </div>`;
+  }).join('');
+
+  view.innerHTML = `
+    <div class="section-label">Draft Board</div>
+    <p class="summary">Snake draft, 8 rounds per drafter, in pick order.</p>
+    <div class="draft-board">${columns}</div>`;
+}
+
 function renderStandings() {
   const aired = DataStore.hasAired();
   const rows = DRAFTERS
@@ -63,8 +98,9 @@ function renderStandings() {
   const banner = aired ? '' : `
     <div class="preseason-banner">Season has not started. No points yet. Standings update once episodes are logged.</div>`;
 
+  const n = DataStore.season.meta.n;
   const list = rows.map((r, i) => `
-    <div class="standing-row ${r.drafter.toLowerCase()}">
+    <a class="standing-row ${r.drafter.toLowerCase()}" href="#/${n}/team/${esc(r.drafter)}">
       <div class="standing-rank">${i + 1}</div>
       <div class="standing-info">
         <div class="standing-name">${esc(r.drafter)}</div>
@@ -74,7 +110,8 @@ function renderStandings() {
         <div class="standing-pts">${r.score}</div>
         <div class="standing-pts-label">points</div>
       </div>
-    </div>`).join('');
+      <div class="standing-chev">&rsaquo;</div>
+    </a>`).join('');
 
   const summary = aired
     ? `${DataStore.season.results.episodes.length} episodes logged.`
@@ -128,9 +165,10 @@ function renderTeam(drafter) {
   const rem = DataStore.playersRemaining(drafter);
   const dc = drafter.toLowerCase();
 
+  const n = DataStore.season.meta.n;
   const switcher = DRAFTERS.map(d => {
     const active = d === drafter ? ' active' : '';
-    return `<a class="team-tab ${d.toLowerCase()}${active}" href="#/team/${d}">${d}</a>`;
+    return `<a class="team-tab ${d.toLowerCase()}${active}" href="#/${n}/team/${d}">${d}</a>`;
   }).join('');
 
   const cards = team.map(p => `
@@ -161,72 +199,126 @@ function renderTeam(drafter) {
 }
 
 /* ---- Routing ---- */
+/* The URL shape is #/<season>/<view>. The season segment is the source of
+   truth for which season is shown; localStorage is only a fallback default. */
 
+let manifest = null;
+
+function isValidSeason(n) {
+  return !!(manifest && manifest.seasons.some(s => String(s.n) === String(n)));
+}
+
+// Default view depends on whether the loaded season is drafted yet.
+function defaultViewForState() {
+  return DataStore.isDrafted() ? 'standings' : 'draft';
+}
+
+// Pull a sane season number when the URL has none: localStorage, else current.
+function fallbackSeason() {
+  const saved = localStorage.getItem(SEASON_KEY);
+  if (saved && isValidSeason(saved)) return String(saved);
+  return String(manifest.currentSeason);
+}
+
+// Parse #/<season>/<view>[/<arg>]. Returns null for the season when invalid,
+// so the caller can redirect.
 function parseHash() {
   const raw = (location.hash || '').replace(/^#\/?/, '');
   const parts = raw.split('/').filter(Boolean);
-  if (parts.length === 0) return { name: 'standings' };
-  if (parts[0] === 'standings') return { name: 'standings' };
-  if (parts[0] === 'cast') return { name: 'cast' };
-  if (parts[0] === 'team') return { name: 'team', drafter: parts[1] || 'Eric' };
-  return { name: 'standings' };
+  const season = parts[0] && isValidSeason(parts[0]) ? String(parts[0]) : null;
+  const view = parts[1] && VIEWS.includes(parts[1]) ? parts[1] : null;
+  return { season, view, arg: parts[2] || null };
 }
 
-function setActiveTab(route) {
+function setActiveTab(view) {
   tabs.querySelectorAll('a').forEach(a => {
-    a.classList.toggle('active', a.dataset.tab === route.name);
+    a.classList.toggle('active', a.dataset.tab === view);
   });
 }
 
-function render() {
-  if (!DataStore.season) return;
-  const route = parseHash();
-  setActiveTab(route);
-  if (route.name === 'cast') renderCast();
-  else if (route.name === 'team') renderTeam(route.drafter);
+// Season-aware top tabs (built per render so hrefs carry the season).
+function buildTabs(n) {
+  tabs.innerHTML = [
+    ['draft', 'Draft'],
+    ['standings', 'Standings'],
+    ['cast', 'Full Cast']
+  ].map(([v, label]) => `<a href="#/${n}/${v}" data-tab="${v}">${label}</a>`).join('');
+}
+
+function applySeasonChrome(season) {
+  const status = season.meta.status === 'active' ? 'In progress' : 'Archived';
+  subtitle.textContent = season.meta.title + ' · Eric, Kris, Kelly';
+  footer.textContent = season.meta.title + ' · ' + status;
+  picker.value = String(season.meta.n);
+}
+
+// Single coordinator: validate URL, redirect if needed, load season, render.
+async function route() {
+  if (!manifest) return;
+  const r = parseHash();
+
+  // No valid season in the URL: redirect to a default landing route.
+  if (!r.season) {
+    const n = fallbackSeason();
+    await ensureSeasonLoaded(n);
+    const v = defaultViewForState();
+    location.replace('#/' + n + '/' + v);
+    return;
+  }
+
+  await ensureSeasonLoaded(r.season);
+  localStorage.setItem(SEASON_KEY, r.season);
+
+  // Valid season but no/unknown view: redirect to the state-aware default.
+  if (!r.view) {
+    location.replace('#/' + r.season + '/' + defaultViewForState());
+    return;
+  }
+
+  applySeasonChrome(DataStore.season);
+  buildTabs(r.season);
+  setActiveTab(r.view);
+
+  if (r.view === 'draft') renderDraft();
+  else if (r.view === 'cast') renderCast();
+  else if (r.view === 'team') renderTeam(r.arg || 'Eric');
   else renderStandings();
   window.scrollTo(0, 0);
 }
 
-/* ---- Season picker ---- */
-
-function pickedSeason(manifest) {
-  const saved = localStorage.getItem(SEASON_KEY);
-  if (saved && manifest.seasons.some(s => String(s.n) === saved)) return saved;
-  return String(manifest.currentSeason);
+// Load a season only when it is not already the loaded one.
+async function ensureSeasonLoaded(n) {
+  if (DataStore.season && String(DataStore.season.meta.n) === String(n)) return;
+  await DataStore.loadSeason(n);
 }
 
-function buildPicker(manifest, selected) {
+/* ---- Season picker ---- */
+
+function buildPicker() {
   picker.innerHTML = manifest.seasons
     .map(s => `<option value="${s.n}">${esc(s.title)}</option>`)
     .join('');
-  picker.value = String(selected);
-  picker.addEventListener('change', async () => {
-    localStorage.setItem(SEASON_KEY, picker.value);
-    await loadAndRender(picker.value);
+  // Changing the dropdown rewrites the URL's season segment, preserving the
+  // current view when it is valid (team falls back to its default arg).
+  picker.addEventListener('change', () => {
+    const cur = parseHash();
+    const view = cur.view || defaultViewForState();
+    if (view === 'team') location.hash = '#/' + picker.value + '/team/Eric';
+    else location.hash = '#/' + picker.value + '/' + view;
   });
-}
-
-async function loadAndRender(n) {
-  const season = await DataStore.loadSeason(n);
-  const status = season.meta.status === 'active' ? 'In progress' : 'Archived';
-  subtitle.textContent = season.meta.title + ' · Eric, Kris, Kelly';
-  footer.textContent = season.meta.title + ' · ' + status;
-  render();
 }
 
 /* ---- Boot ---- */
 
 async function boot() {
   try {
-    const manifest = await DataStore.loadManifest();
-    const selected = pickedSeason(manifest);
-    buildPicker(manifest, selected);
-    await loadAndRender(selected);
+    manifest = await DataStore.loadManifest();
+    buildPicker();
+    await route();
   } catch (err) {
     view.innerHTML = `<p class="summary">Could not load season data. ${esc(err.message)}</p>`;
   }
 }
 
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', route);
 boot();
