@@ -1,0 +1,173 @@
+/* Survivor Draft Pool - styles ported from the draft board */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --fire: #FF6B00; --ember: #FF3D00; --gold: #D4A017;
+  --dark: #0D0D0D; --charcoal: #1A1A1A; --smoke: #2A2A2A; --ash: #3D3D3D;
+  --muted: #666; --light: #F0E6D3;
+  --vatu: #C0226A; --cila: #E07000; --kalo: #007070;
+  --eric: #D4A017; --kris: #7B68EE; --kelly: #C0226A;
+}
+
+body {
+  background: var(--dark); color: var(--light);
+  font-family: 'Lato', sans-serif; min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(255,107,0,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(192,34,106,0.05) 0%, transparent 55%);
+}
+
+/* Header + nav */
+header { text-align: center; padding: 18px 16px 0; border-bottom: 1px solid rgba(212,160,23,0.15); }
+h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px); color: var(--gold); letter-spacing: 0.06em; }
+.subtitle { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; color: var(--muted); margin-top: 4px; text-transform: uppercase; }
+
+.header-controls { margin-top: 12px; }
+#season-picker {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.08em;
+  background: var(--charcoal); color: var(--light);
+  border: 1px solid var(--ash); border-radius: 3px; padding: 5px 10px; cursor: pointer;
+}
+
+.tabs { display: flex; justify-content: center; gap: 4px; margin-top: 14px; flex-wrap: wrap; }
+.tabs a {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; padding: 8px 14px;
+  border-bottom: 2px solid transparent;
+}
+.tabs a:hover { color: var(--light); }
+.tabs a.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* Layout */
+.main { max-width: 760px; margin: 0 auto; padding: 18px 16px 48px; }
+.loading { text-align: center; color: var(--muted); font-family: 'Cinzel', serif; letter-spacing: 0.1em; padding: 60px 0; }
+
+.section-label {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(212,160,23,0.3), transparent); }
+
+.meta-line { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+.summary { color: var(--light); opacity: 0.8; font-size: 13px; line-height: 1.6; margin: 6px 0 20px; }
+
+/* Pre-season banner */
+.preseason-banner {
+  background: var(--smoke); border: 1px solid rgba(212,160,23,0.25);
+  border-radius: 6px; padding: 14px 16px; margin-bottom: 20px;
+  font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; color: var(--gold);
+}
+
+/* Standings leaderboard */
+.standings { display: flex; flex-direction: column; gap: 10px; }
+.standing-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--charcoal); border-radius: 6px; padding: 14px 16px;
+  border-left: 4px solid var(--ash);
+}
+.standing-row.eric  { border-left-color: var(--eric);  }
+.standing-row.kris  { border-left-color: var(--kris);  }
+.standing-row.kelly { border-left-color: var(--kelly); }
+.standing-rank { font-family: 'Cinzel Decorative', serif; font-size: 22px; color: var(--muted); width: 26px; text-align: center; flex-shrink: 0; }
+.standing-info { flex: 1; min-width: 0; }
+.standing-name { font-family: 'Cinzel Decorative', serif; font-size: 17px; }
+.standing-row.eric  .standing-name { color: var(--eric);  }
+.standing-row.kris  .standing-name { color: var(--kris);  }
+.standing-row.kelly .standing-name { color: var(--kelly); }
+.standing-sub { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.standing-score { text-align: right; flex-shrink: 0; }
+.standing-pts { font-family: 'Cinzel Decorative', serif; font-size: 24px; color: var(--gold); }
+.standing-pts-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+/* Filter buttons (cast) */
+.filter-group { margin-bottom: 12px; }
+.filter-caption { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-btn {
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 2px; border: 1px solid var(--ash);
+  background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s;
+}
+.filter-btn:hover, .filter-btn.active { border-color: var(--gold); color: var(--light); background: var(--smoke); }
+
+/* Player card grid */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.player-card {
+  background: var(--charcoal); border-radius: 8px; padding: 16px 12px 14px;
+  border: 1px solid var(--ash); text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+}
+.player-card.eliminated { opacity: 0.45; filter: grayscale(0.85); }
+
+.card-photo {
+  width: 86px; height: 86px; border-radius: 50%; overflow: hidden;
+  position: relative; flex-shrink: 0; border: 2px solid var(--ash); margin-bottom: 10px;
+}
+.player-card.eric  .card-photo { border-color: var(--eric);  }
+.player-card.kris  .card-photo { border-color: var(--kris);  }
+.player-card.kelly .card-photo { border-color: var(--kelly); }
+.card-photo img {
+  width: 115%; height: 115%; object-fit: cover; object-position: center 15%;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+
+.card-name { font-family: 'Cinzel Decorative', serif; font-size: 13px; line-height: 1.25; }
+.card-meta { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+.card-occupation { font-size: 11px; color: var(--light); opacity: 0.75; margin-top: 4px; line-height: 1.35; }
+.card-seasons { font-size: 10px; color: var(--muted); margin-top: 4px; font-style: italic; line-height: 1.35; }
+
+.badge-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 9px; }
+.tribe-badge { font-size: 8px; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+.tribe-badge.Vatu { background: rgba(192,34,106,0.2); color: #e88ab8; }
+.tribe-badge.Cila { background: rgba(224,112,0,0.2);  color: #ffb366; }
+.tribe-badge.Kalo { background: rgba(0,112,112,0.2);  color: #66cccc; }
+
+.drafter-badge { font-size: 8px; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+.drafter-badge.eric  { background: rgba(212,160,23,0.18); color: var(--eric);  }
+.drafter-badge.kris  { background: rgba(123,104,238,0.18); color: var(--kris);  }
+.drafter-badge.kelly { background: rgba(192,34,106,0.18); color: var(--kelly); }
+
+.elim-tag { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ember); margin-top: 7px; }
+
+/* Team view */
+.team-switch { display: flex; gap: 6px; margin-bottom: 16px; }
+.team-tab {
+  flex: 1; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  text-align: center; padding: 9px 6px; border-radius: 4px; border: 1px solid var(--ash);
+  background: transparent; color: var(--muted); text-decoration: none;
+}
+.team-tab.eric.active  { border-color: var(--eric);  color: var(--eric);  background: rgba(212,160,23,0.08); }
+.team-tab.kris.active  { border-color: var(--kris);  color: var(--kris);  background: rgba(123,104,238,0.08); }
+.team-tab.kelly.active { border-color: var(--kelly); color: var(--kelly); background: rgba(192,34,106,0.08); }
+
+.team-banner {
+  border-radius: 6px; padding: 16px 18px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 14px; border: 1px solid;
+}
+.team-banner.eric  { background: rgba(212,160,23,0.08);  border-color: rgba(212,160,23,0.3);  }
+.team-banner.kris  { background: rgba(123,104,238,0.08); border-color: rgba(123,104,238,0.3); }
+.team-banner.kelly { background: rgba(192,34,106,0.08);  border-color: rgba(192,34,106,0.3);  }
+.team-banner-name { font-family: 'Cinzel Decorative', serif; font-size: 20px; }
+.team-banner.eric  .team-banner-name { color: var(--eric);  }
+.team-banner.kris  .team-banner-name { color: var(--kris);  }
+.team-banner.kelly .team-banner-name { color: var(--kelly); }
+.team-banner-meta { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.team-banner-score { margin-left: auto; text-align: right; }
+.team-banner-pts { font-family: 'Cinzel Decorative', serif; font-size: 30px; }
+.team-banner.eric  .team-banner-pts { color: var(--eric);  }
+.team-banner.kris  .team-banner-pts { color: var(--kris);  }
+.team-banner.kelly .team-banner-pts { color: var(--kelly); }
+.team-banner-pts-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+.pick-num { font-family: 'Cinzel Decorative', serif; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* Footer */
+.site-footer {
+  text-align: center; padding: 18px 16px 30px; color: var(--muted);
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .card-photo { width: 72px; height: 72px; }
+}
