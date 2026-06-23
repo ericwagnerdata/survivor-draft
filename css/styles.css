@@ -83,6 +83,109 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .draft-pick-info .tribe-badge { align-self: flex-start; }
 .draft-pick-num { font-family: 'Cinzel Decorative', serif; font-size: 11px; color: var(--muted); flex-shrink: 0; }
 
+/* ---- Interactive draft engine (undrafted seasons) ---- */
+
+.sandbox-note {
+  background: rgba(255,107,0,0.08); border: 1px solid rgba(255,107,0,0.3);
+  border-radius: 6px; padding: 12px 14px; margin-bottom: 16px;
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.06em;
+  line-height: 1.5; color: var(--fire);
+}
+
+/* On the clock banner */
+.clock-banner {
+  border-radius: 6px; padding: 12px 16px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px; border: 1px solid;
+}
+.clock-banner.eric  { background: rgba(212,160,23,0.08);  border-color: rgba(212,160,23,0.3);  }
+.clock-banner.kris  { background: rgba(123,104,238,0.08); border-color: rgba(123,104,238,0.3); }
+.clock-banner.kelly { background: rgba(192,34,106,0.08);  border-color: rgba(192,34,106,0.3);  }
+.clock-meta { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+.clock-name { font-family: 'Cinzel Decorative', serif; font-size: 16px; }
+.clock-banner.eric  .clock-name { color: var(--eric);  }
+.clock-banner.kris  .clock-name { color: var(--kris);  }
+.clock-banner.kelly .clock-name { color: var(--kelly); }
+.clock-pick-num { margin-left: auto; font-family: 'Cinzel Decorative', serif; font-size: 22px; }
+.clock-banner.eric  .clock-pick-num { color: var(--eric);  }
+.clock-banner.kris  .clock-pick-num { color: var(--kris);  }
+.clock-banner.kelly .clock-pick-num { color: var(--kelly); }
+
+/* Eric's top-available suggestion */
+.suggestion {
+  background: var(--smoke); border: 1px solid rgba(212,160,23,0.2);
+  border-radius: 4px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 11px; color: var(--muted); font-family: 'Cinzel', serif; letter-spacing: 0.08em;
+}
+.suggestion strong { color: var(--gold); }
+
+.done-banner { text-align: center; padding: 26px; font-family: 'Cinzel Decorative', serif; font-size: 18px; color: var(--gold); margin-bottom: 14px; }
+
+/* Teams building up during the draft */
+.teams { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.team-col { background: var(--charcoal); border-radius: 6px; overflow: hidden; }
+.team-header { padding: 10px 12px; font-family: 'Cinzel', serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; border-bottom: 1px solid var(--ash); display: flex; align-items: center; justify-content: space-between; }
+.team-header.eric  { border-top: 3px solid var(--eric);  color: var(--eric);  }
+.team-header.kris  { border-top: 3px solid var(--kris);  color: var(--kris);  }
+.team-header.kelly { border-top: 3px solid var(--kelly); color: var(--kelly); }
+.team-count { font-size: 9px; opacity: 0.6; }
+.team-picks { padding: 6px; display: flex; flex-direction: column; gap: 3px; min-height: 60px; }
+.team-pick { display: flex; align-items: center; gap: 6px; padding: 5px 6px; background: var(--smoke); border-radius: 3px; }
+.pick-photo { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; }
+.pick-photo img { width: 115%; height: 115%; object-fit: cover; object-position: center 15%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.pick-name { font-family: 'Cinzel', serif; font-size: 9px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pick-tribe { font-size: 7px; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; font-weight: 700; flex-shrink: 0; background: var(--ash); color: var(--light); }
+.pick-tribe.Vatu { background: rgba(192,34,106,0.2); color: #e88ab8; }
+.pick-tribe.Cila { background: rgba(224,112,0,0.2);  color: #ffb366; }
+.pick-tribe.Kalo { background: rgba(0,112,112,0.2);  color: #66cccc; }
+
+/* Draft control buttons (undo / reset / export) */
+.draft-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
+.btn-undo, .btn-reset, .btn-export {
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 2px; border: 1px solid var(--ash);
+  background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s;
+}
+.btn-undo:hover, .btn-reset:hover { border-color: var(--light); color: var(--light); }
+.btn-reset { border-color: rgba(255,61,0,0.4); color: #ff8a5c; }
+.btn-reset:hover { border-color: var(--ember); color: var(--ember); }
+.btn-export { border-color: rgba(212,160,23,0.4); color: var(--gold); }
+.btn-export:hover { border-color: var(--gold); background: rgba(212,160,23,0.08); }
+
+/* Available players list */
+.avail-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+.avail-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(212,160,23,0.3), transparent); }
+.avail-count { background: var(--ash); color: var(--muted); font-size: 9px; padding: 1px 7px; border-radius: 10px; letter-spacing: 0; }
+.player-list { display: flex; flex-direction: column; gap: 5px; }
+.avail-player {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  background: var(--charcoal); border: 1px solid var(--ash); border-radius: 5px; transition: all 0.15s;
+}
+.avail-player:hover { border-color: var(--fire); background: var(--smoke); }
+.avail-player.eric-top { border-left: 2px solid var(--eric); }
+.avail-player .a-photo { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; }
+.avail-player .a-photo img { width: 115%; height: 115%; object-fit: cover; object-position: center 15%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.avail-player .a-info { flex: 1; min-width: 0; }
+.avail-player .a-name { font-family: 'Cinzel', serif; font-size: 12px; font-weight: 600; }
+.avail-player .a-meta { font-size: 10px; color: var(--muted); }
+.avail-player .a-rank { font-family: 'Cinzel', serif; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.avail-player .a-tribe { font-size: 8px; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; font-weight: 700; flex-shrink: 0; background: var(--ash); color: var(--light); }
+.avail-player .a-tribe.Vatu { background: rgba(192,34,106,0.2); color: #e88ab8; }
+.avail-player .a-tribe.Cila { background: rgba(224,112,0,0.2);  color: #ffb366; }
+.avail-player .a-tribe.Kalo { background: rgba(0,112,112,0.2);  color: #66cccc; }
+
+.tier-badge { font-size: 8px; padding: 1px 5px; border-radius: 2px; font-weight: 700; flex-shrink: 0; }
+.tier-badge.High   { background: rgba(76,175,80,0.15);  color: #4CAF50; }
+.tier-badge.Medium { background: rgba(212,160,23,0.15); color: var(--gold); }
+.tier-badge.Low    { background: rgba(136,136,136,0.15); color: var(--muted); }
+
+.pick-btn { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 12px; border-radius: 2px; border: 1px solid var(--fire); background: var(--fire); color: #fff; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.pick-btn:hover { background: var(--ember); border-color: var(--ember); }
+
+/* Export panel */
+.export-panel { margin-top: 22px; padding-top: 6px; border-top: 1px solid rgba(212,160,23,0.15); }
+.export-note { font-size: 11px; color: var(--muted); line-height: 1.6; margin: 4px 0 12px; }
+.export-note code { font-family: 'Lato', monospace; background: var(--smoke); padding: 1px 5px; border-radius: 3px; color: var(--light); }
+
 /* Standings leaderboard */
 .standings { display: flex; flex-direction: column; gap: 10px; }
 .standing-row {
@@ -205,4 +308,13 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
   .draft-pick { flex-wrap: wrap; gap: 5px; padding: 5px; }
   .draft-pick-photo { width: 26px; height: 26px; }
   .draft-pick-name { font-size: 9px; }
+
+  /* Interactive draft on a phone: tighten the team columns, let long available
+     rows wrap so the Pick button stays reachable, and let the list scroll. */
+  .teams { gap: 4px; }
+  .team-header { font-size: 9px; padding: 8px 5px; letter-spacing: 0.04em; }
+  .team-picks { padding: 4px; gap: 2px; }
+  .avail-player { flex-wrap: wrap; gap: 7px; padding: 8px 10px; }
+  .avail-player .a-info { flex: 1 1 60%; }
+  .player-list { max-height: 65vh; overflow-y: auto; }
 }

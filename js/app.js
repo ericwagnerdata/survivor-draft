@@ -32,10 +32,15 @@ function esc(s) {
 }
 
 function photoCard(p) {
-  const drafterClass = p.drafter.toLowerCase();
+  // Undrafted seasons (e.g. the demo) have drafter:null, so guard the class
+  // and only show the drafter badge once a player has been drafted.
+  const drafterClass = p.drafter ? p.drafter.toLowerCase() : '';
   const elimClass = p.eliminated ? ' eliminated' : '';
   const elimTag = p.eliminated
     ? `<div class="elim-tag">Out, episode ${esc(p.eliminatedEpisode)}</div>`
+    : '';
+  const drafterBadge = p.drafter
+    ? `<span class="drafter-badge ${drafterClass}">${esc(p.drafter)}</span>`
     : '';
   return `
     <div class="player-card ${drafterClass}${elimClass}">
@@ -46,7 +51,7 @@ function photoCard(p) {
       <div class="card-seasons">${esc(p.seasons)}</div>
       <div class="badge-row">
         <span class="tribe-badge ${esc(p.tribe)}">${esc(p.tribe)}</span>
-        <span class="drafter-badge ${drafterClass}">${esc(p.drafter)}</span>
+        ${drafterBadge}
       </div>
       ${elimTag}
     </div>`;
@@ -55,10 +60,10 @@ function photoCard(p) {
 /* ---- Views ---- */
 
 function renderDraft() {
+  // Undrafted seasons run the interactive snake draft engine (js/draft.js).
+  // Drafted seasons (S50) fall through to the locked read-only recap below.
   if (!DataStore.isDrafted()) {
-    view.innerHTML = `
-      <div class="section-label">Draft</div>
-      <div class="preseason-banner">Draft has not been run yet for this season.</div>`;
+    Draft.render(view);
     return;
   }
 
@@ -115,7 +120,9 @@ function renderStandings() {
 
   const summary = aired
     ? `${DataStore.season.results.episodes.length} episodes logged.`
-    : `${DataStore.season.players.length} castaways drafted across 3 teams. The season has not aired.`;
+    : DataStore.isDrafted()
+      ? `${DataStore.season.players.length} castaways drafted across 3 teams. The season has not aired.`
+      : `Draft is not complete yet. Open the Draft tab to run it.`;
 
   view.innerHTML = `
     <div class="section-label">Standings</div>
@@ -125,6 +132,17 @@ function renderStandings() {
 }
 
 function renderCast() {
+  const meta = DataStore.season.meta;
+  const drafted = DataStore.isDrafted();
+  // Filter options come from this season, not hardcoded S50 values.
+  const seasonTribes = (Array.isArray(meta.tribes) && meta.tribes.length)
+    ? meta.tribes
+    : [...new Set(DataStore.season.players.map(p => p.tribe))];
+  const seasonDrafters = Array.isArray(meta.drafters) ? meta.drafters : DRAFTERS;
+  // Drop any active filter that does not apply to this season.
+  if (castFilter.tribe !== 'All' && !seasonTribes.includes(castFilter.tribe)) castFilter.tribe = 'All';
+  if (!drafted) castFilter.drafter = 'All';
+
   let players = DataStore.season.players.slice();
   if (castFilter.tribe !== 'All') players = players.filter(p => p.tribe === castFilter.tribe);
   if (castFilter.drafter !== 'All') players = players.filter(p => p.drafter === castFilter.drafter);
@@ -134,8 +152,13 @@ function renderCast() {
     return `<button class="filter-btn${active}" data-group="${group}" data-value="${esc(value)}">${esc(label)}</button>`;
   };
 
-  const tribeBtns = ['All', ...TRIBES].map(t => btn(t, 'tribe', t)).join('');
-  const drafterBtns = ['All', ...DRAFTERS].map(d => btn(d, 'drafter', d)).join('');
+  const tribeBtns = ['All', ...seasonTribes].map(t => btn(t, 'tribe', t)).join('');
+  // Drafter filter only makes sense once a season is drafted.
+  const drafterGroup = drafted ? `
+    <div class="filter-group">
+      <div class="filter-caption">Drafter</div>
+      <div class="filter-row">${['All', ...seasonDrafters].map(d => btn(d, 'drafter', d)).join('')}</div>
+    </div>` : '';
 
   view.innerHTML = `
     <div class="section-label">Full Cast</div>
@@ -143,10 +166,7 @@ function renderCast() {
       <div class="filter-caption">Tribe</div>
       <div class="filter-row">${tribeBtns}</div>
     </div>
-    <div class="filter-group">
-      <div class="filter-caption">Drafter</div>
-      <div class="filter-row">${drafterBtns}</div>
-    </div>
+    ${drafterGroup}
     <p class="meta-line">${players.length} of ${DataStore.season.players.length} castaways</p>
     <div class="card-grid" style="margin-top:14px">${players.map(photoCard).join('')}</div>`;
 

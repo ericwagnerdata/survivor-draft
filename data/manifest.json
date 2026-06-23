@@ -14,7 +14,23 @@
         "Cila",
         "Kalo"
       ],
-      "status": "active"
+      "status": "active",
+      "picksPerDrafter": 8
+    },
+    {
+      "n": "demo",
+      "title": "Demo Draft (sandbox)",
+      "drafters": [
+        "Eric",
+        "Kris",
+        "Kelly"
+      ],
+      "tribes": [
+        "Tribe A",
+        "Tribe B"
+      ],
+      "status": "predraft",
+      "picksPerDrafter": 6
     }
   ]
 }
