@@ -31,6 +31,13 @@ function esc(s) {
   return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
+// A tribe badge colored by the loaded season's tribe palette (DataStore.tribeColor).
+// Inline style keeps it generic for any tribe names, no per-tribe CSS class needed.
+function tribeBadge(tribe, cls) {
+  const c = DataStore.tribeColor(tribe);
+  return `<span class="${cls}" style="background:${c.bg};color:${c.text}">${esc(tribe)}</span>`;
+}
+
 function photoCard(p) {
   // Undrafted seasons (e.g. the demo) have drafter:null, so guard the class
   // and only show the drafter badge once a player has been drafted.
@@ -50,7 +57,7 @@ function photoCard(p) {
       <div class="card-occupation">${esc(p.occupation)}</div>
       <div class="card-seasons">${esc(p.seasons)}</div>
       <div class="badge-row">
-        <span class="tribe-badge ${esc(p.tribe)}">${esc(p.tribe)}</span>
+        ${tribeBadge(p.tribe, 'tribe-badge')}
         ${drafterBadge}
       </div>
       ${elimTag}
@@ -74,7 +81,7 @@ function renderDraft() {
         <div class="draft-pick-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
         <div class="draft-pick-info">
           <div class="draft-pick-name">${esc(p.name)}</div>
-          <span class="tribe-badge ${esc(p.tribe)}">${esc(p.tribe)}</span>
+          ${tribeBadge(p.tribe, 'tribe-badge')}
         </div>
         <div class="draft-pick-num">#${esc(p.pick)}</div>
       </div>`).join('');
@@ -198,7 +205,7 @@ function renderTeam(drafter) {
       <div class="card-meta">Age ${esc(p.age)}</div>
       <div class="card-occupation">${esc(p.occupation)}</div>
       <div class="card-seasons">${esc(p.seasons)}</div>
-      <div class="badge-row"><span class="tribe-badge ${esc(p.tribe)}">${esc(p.tribe)}</span></div>
+      <div class="badge-row">${tribeBadge(p.tribe, 'tribe-badge')}</div>
       ${p.eliminated ? `<div class="elim-tag">Out, episode ${esc(p.eliminatedEpisode)}</div>` : ''}
       <div class="pick-num">Pick ${esc(p.pick)}</div>
     </div>`).join('');

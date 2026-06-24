@@ -99,7 +99,7 @@
   },
   {
     "name": "Castaway 08",
-    "tribe": "Tribe A",
+    "tribe": "Tribe B",
     "age": 38,
     "occupation": "Lawyer",
     "seasons": "51",
@@ -113,7 +113,7 @@
   },
   {
     "name": "Castaway 09",
-    "tribe": "Tribe A",
+    "tribe": "Tribe B",
     "age": 55,
     "occupation": "Farmer",
     "seasons": "51",
@@ -127,7 +127,7 @@
   },
   {
     "name": "Castaway 10",
-    "tribe": "Tribe A",
+    "tribe": "Tribe B",
     "age": 29,
     "occupation": "Writer",
     "seasons": "51",
@@ -197,7 +197,7 @@
   },
   {
     "name": "Castaway 15",
-    "tribe": "Tribe B",
+    "tribe": "Tribe C",
     "age": 36,
     "occupation": "Analyst",
     "seasons": "51",
@@ -211,7 +211,7 @@
   },
   {
     "name": "Castaway 16",
-    "tribe": "Tribe B",
+    "tribe": "Tribe C",
     "age": 50,
     "occupation": "Student",
     "seasons": "51",
@@ -225,7 +225,7 @@
   },
   {
     "name": "Castaway 17",
-    "tribe": "Tribe B",
+    "tribe": "Tribe C",
     "age": 30,
     "occupation": "Artist",
     "seasons": "51",
@@ -239,7 +239,7 @@
   },
   {
     "name": "Castaway 18",
-    "tribe": "Tribe B",
+    "tribe": "Tribe C",
     "age": 44,
     "occupation": "Lawyer",
     "seasons": "51",
@@ -253,7 +253,7 @@
   },
   {
     "name": "Castaway 19",
-    "tribe": "Tribe B",
+    "tribe": "Tribe C",
     "age": 27,
     "occupation": "Farmer",
     "seasons": "51",
@@ -267,7 +267,7 @@
   },
   {
     "name": "Castaway 20",
-    "tribe": "Tribe B",
+    "tribe": "Tribe C",
     "age": 39,
     "occupation": "Writer",
     "seasons": "51",

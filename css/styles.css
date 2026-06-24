@@ -92,6 +92,45 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
   line-height: 1.5; color: var(--fire);
 }
 
+/* View toggle: Public board (default) vs PIN-gated Eric view */
+.view-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
+.view-btn {
+  flex: 1; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 10px; border-radius: 3px; border: 1px solid var(--ash);
+  background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s;
+}
+.view-btn:hover { color: var(--light); border-color: var(--light); }
+.view-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,160,23,0.08); }
+.view-lock { font-size: 9px; opacity: 0.7; }
+
+/* PIN prompt for unlocking the Eric view */
+.pin-prompt {
+  background: var(--smoke); border: 1px solid rgba(212,160,23,0.25);
+  border-radius: 6px; padding: 12px 14px; margin-bottom: 14px;
+}
+.pin-label { display: block; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.pin-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pin-input {
+  flex: 1 1 120px; min-width: 100px; background: var(--charcoal); color: var(--light);
+  border: 1px solid var(--ash); border-radius: 3px; padding: 7px 10px;
+  font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.1em;
+}
+.pin-input:focus { outline: none; border-color: var(--gold); }
+.pin-error { margin-top: 8px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.06em; color: #ff8a5c; }
+
+/* Public board: compact chips, all available castaways at once */
+.cast-board { display: flex; flex-wrap: wrap; gap: 6px; }
+.cast-chip {
+  display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 4px;
+  background: var(--charcoal); border: 1px solid var(--ash); border-radius: 20px;
+  color: var(--light); cursor: pointer; transition: all 0.12s; text-align: left;
+}
+.cast-chip:hover { border-color: var(--fire); background: var(--smoke); }
+.chip-photo { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; }
+.chip-photo img { width: 115%; height: 115%; object-fit: cover; object-position: center 15%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.chip-name { font-family: 'Cinzel', serif; font-size: 11px; white-space: nowrap; }
+.chip-tribe { font-size: 7px; padding: 1px 5px; border-radius: 8px; text-transform: uppercase; font-weight: 700; flex-shrink: 0; }
+
 /* On the clock banner */
 .clock-banner {
   border-radius: 6px; padding: 12px 16px; margin-bottom: 14px;
@@ -133,10 +172,10 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .pick-photo { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; }
 .pick-photo img { width: 115%; height: 115%; object-fit: cover; object-position: center 15%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .pick-name { font-family: 'Cinzel', serif; font-size: 9px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Tribe color is applied inline per badge (DataStore.tribeColor); this class
+   only carries shape/size. The base background is a fallback before the inline
+   style lands. */
 .pick-tribe { font-size: 7px; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; font-weight: 700; flex-shrink: 0; background: var(--ash); color: var(--light); }
-.pick-tribe.Vatu { background: rgba(192,34,106,0.2); color: #e88ab8; }
-.pick-tribe.Cila { background: rgba(224,112,0,0.2);  color: #ffb366; }
-.pick-tribe.Kalo { background: rgba(0,112,112,0.2);  color: #66cccc; }
 
 /* Draft control buttons (undo / reset / export) */
 .draft-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
@@ -169,9 +208,6 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .avail-player .a-meta { font-size: 10px; color: var(--muted); }
 .avail-player .a-rank { font-family: 'Cinzel', serif; font-size: 10px; color: var(--muted); flex-shrink: 0; }
 .avail-player .a-tribe { font-size: 8px; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; font-weight: 700; flex-shrink: 0; background: var(--ash); color: var(--light); }
-.avail-player .a-tribe.Vatu { background: rgba(192,34,106,0.2); color: #e88ab8; }
-.avail-player .a-tribe.Cila { background: rgba(224,112,0,0.2);  color: #ffb366; }
-.avail-player .a-tribe.Kalo { background: rgba(0,112,112,0.2);  color: #66cccc; }
 
 .tier-badge { font-size: 8px; padding: 1px 5px; border-radius: 2px; font-weight: 700; flex-shrink: 0; }
 .tier-badge.High   { background: rgba(76,175,80,0.15);  color: #4CAF50; }
@@ -248,10 +284,7 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .card-seasons { font-size: 10px; color: var(--muted); margin-top: 4px; font-style: italic; line-height: 1.35; }
 
 .badge-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 9px; }
-.tribe-badge { font-size: 8px; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
-.tribe-badge.Vatu { background: rgba(192,34,106,0.2); color: #e88ab8; }
-.tribe-badge.Cila { background: rgba(224,112,0,0.2);  color: #ffb366; }
-.tribe-badge.Kalo { background: rgba(0,112,112,0.2);  color: #66cccc; }
+.tribe-badge { font-size: 8px; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; background: var(--ash); color: var(--light); }
 
 .drafter-badge { font-size: 8px; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
 .drafter-badge.eric  { background: rgba(212,160,23,0.18); color: var(--eric);  }
@@ -317,4 +350,11 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
   .avail-player { flex-wrap: wrap; gap: 7px; padding: 8px 10px; }
   .avail-player .a-info { flex: 1 1 60%; }
   .player-list { max-height: 65vh; overflow-y: auto; }
+
+  /* Public board chips stay compact and wrap on a phone (minimal scrolling). */
+  .cast-board { gap: 5px; }
+  .cast-chip { gap: 5px; padding: 3px 7px 3px 3px; }
+  .chip-photo { width: 24px; height: 24px; }
+  .chip-name { font-size: 10px; }
+  .view-btn { font-size: 9px; padding: 7px 6px; letter-spacing: 0.06em; }
 }

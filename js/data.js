@@ -74,5 +74,28 @@ const DataStore = {
     const team = this.playersByDrafter(drafter);
     const alive = team.filter(p => !p.eliminated).length;
     return { alive, total: team.length };
+  },
+
+  // Generic tribe colors, assigned by a tribe's index in season.meta.tribes.
+  // The first three entries are S50's existing colors (vatu / cila / kalo), so
+  // a 3-tribe S50 renders identically; later seasons with more tribes pull the
+  // remaining palette entries. Tribes not listed in meta fall back to gray.
+  // Each entry: { base, bg, text } where bg/text drive the soft badge styling.
+  TRIBE_PALETTE: [
+    { base: '#C0226A', bg: 'rgba(192,34,106,0.2)', text: '#e88ab8' },
+    { base: '#E07000', bg: 'rgba(224,112,0,0.2)',  text: '#ffb366' },
+    { base: '#007070', bg: 'rgba(0,112,112,0.2)',  text: '#66cccc' },
+    { base: '#7B68EE', bg: 'rgba(123,104,238,0.2)', text: '#b3a7f5' },
+    { base: '#3FA34D', bg: 'rgba(63,163,77,0.2)',   text: '#86d491' }
+  ],
+  TRIBE_FALLBACK: { base: '#3D3D3D', bg: 'rgba(61,61,61,0.5)', text: '#F0E6D3' },
+
+  // Color for a tribe name in the currently loaded season (index into the palette).
+  tribeColor(tribeName) {
+    const tribes = (this.season && this.season.meta && Array.isArray(this.season.meta.tribes))
+      ? this.season.meta.tribes : [];
+    const i = tribes.indexOf(tribeName);
+    if (i < 0) return this.TRIBE_FALLBACK;
+    return this.TRIBE_PALETTE[i % this.TRIBE_PALETTE.length];
   }
 };
