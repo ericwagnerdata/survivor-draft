@@ -71,9 +71,23 @@ const DataStore = {
   },
 
   // Replace the working copy with a fresh episodes array (sorted by episode).
-  saveLocalResults(episodes) {
+  // currentEpisode (the shared spoiler cutoff) is preserved across saves. When
+  // it is not provided, default it to the highest episode entered so a fresh
+  // working copy reveals everything entered so far.
+  saveLocalResults(episodes, currentEpisode) {
     const sorted = episodes.slice().sort((a, b) => a.episode - b.episode);
-    const payload = { season: this.season.meta.n, episodes: sorted };
+    let cutoff = currentEpisode;
+    if (typeof cutoff !== 'number') {
+      // Keep the existing cutoff if one is already stored, else default to max.
+      let stored = null;
+      try {
+        const raw = localStorage.getItem(this.resultsKey());
+        if (raw) stored = JSON.parse(raw);
+      } catch (e) { stored = null; }
+      if (stored && typeof stored.currentEpisode === 'number') cutoff = stored.currentEpisode;
+      else cutoff = sorted.length ? Math.max(...sorted.map(e => e.episode)) : 0;
+    }
+    const payload = { season: this.season.meta.n, currentEpisode: cutoff, episodes: sorted };
     try { localStorage.setItem(this.resultsKey(), JSON.stringify(payload)); } catch (e) { /* ignore */ }
   },
 
@@ -82,9 +96,37 @@ const DataStore = {
     try { localStorage.removeItem(this.resultsKey()); } catch (e) { /* ignore */ }
   },
 
-  // True once the season has at least one effective (working or committed) episode.
+  // The shared "caught up through episode N" cutoff. Reads currentEpisode from
+  // the effective results (working copy if present, else committed results.json).
+  // Backward compatible: if currentEpisode is missing, fall back to the highest
+  // episode number present so existing data still shows everything; 0 when none.
+  currentEpisode() {
+    if (!this.season) return 0;
+    // Prefer the working copy's currentEpisode, then committed, then fall back.
+    let working = null;
+    try {
+      const raw = localStorage.getItem(this.resultsKey());
+      if (raw) working = JSON.parse(raw);
+    } catch (e) { working = null; }
+    if (working && typeof working.currentEpisode === 'number') return working.currentEpisode;
+    if (this.season.results && typeof this.season.results.currentEpisode === 'number') {
+      return this.season.results.currentEpisode;
+    }
+    const eps = this.effectiveEpisodes();
+    return eps.length ? Math.max(...eps.map(e => e.episode)) : 0;
+  },
+
+  // The spoiler-gated episodes: effective episodes filtered to episode <= the
+  // shared cutoff. EVERY consumer (standings, scores, eliminations, charts,
+  // log, stats) reads this so nothing beyond the cutoff renders anywhere.
+  visibleEpisodes() {
+    const cutoff = this.currentEpisode();
+    return this.effectiveEpisodes().filter(ep => ep.episode <= cutoff);
+  },
+
+  // True once the season has at least one VISIBLE (gated) episode.
   hasAired() {
-    return this.effectiveEpisodes().length > 0;
+    return this.visibleEpisodes().length > 0;
   },
 
   playersByDrafter(drafter) {
@@ -98,7 +140,7 @@ const DataStore = {
   teamScore(drafter) {
     let total = 0;
     const team = this.playersByDrafter(drafter);
-    for (const ep of this.effectiveEpisodes()) {
+    for (const ep of this.visibleEpisodes()) {
       const scores = ep.scores || {};
       for (const p of team) {
         if (typeof scores[p.name] === 'number') total += scores[p.name];
@@ -110,7 +152,7 @@ const DataStore = {
   // Elimination derived from the effective episodes, so players.json stays static.
   // Scan in episode order; first episode that lists the player marks them out.
   eliminationInfo(playerName) {
-    const eps = this.effectiveEpisodes().slice().sort((a, b) => a.episode - b.episode);
+    const eps = this.visibleEpisodes().slice().sort((a, b) => a.episode - b.episode);
     for (const ep of eps) {
       if (Array.isArray(ep.eliminated) && ep.eliminated.includes(playerName)) {
         return { eliminated: true, episode: ep.episode };
@@ -129,7 +171,7 @@ const DataStore = {
   //   { episodes: [1..N], lines: { <drafter>: [running total per episode] } }
   // where each line value is that drafter's total points through that episode.
   cumulativeStandings(drafters) {
-    const eps = this.effectiveEpisodes().slice().sort((a, b) => a.episode - b.episode);
+    const eps = this.visibleEpisodes().slice().sort((a, b) => a.episode - b.episode);
     const labels = eps.map(ep => ep.episode);
     const lines = {};
     drafters.forEach(d => {
@@ -153,6 +195,74 @@ const DataStore = {
       const v = scores[name];
       return sum + (typeof v === 'number' ? v : 0);
     }, 0);
+  },
+
+  /* ---- Stats aggregations (all gated to visibleEpisodes) ----
+     Each helper returns the same shape so the chart + table builders can be
+     shared across the three groups:
+       { episodes: [1..N],            // visible episode numbers (labels)
+         keys: [<entity>...],          // series order (managers / tribes / players)
+         perEpisode: { <key>: [pts per episode] },
+         cumulative: { <key>: [running total per episode] },
+         totals:     { <key>: grand total } }
+     Built from one pass so per-episode and cumulative stay consistent. */
+
+  // Generic builder: scoreOf(playerName) -> the key (entity) that player's
+  // points belong to, or null to skip. keys fixes the series order.
+  _statsBy(keyOf, keys) {
+    const eps = this.visibleEpisodes().slice().sort((a, b) => a.episode - b.episode);
+    const labels = eps.map(ep => ep.episode);
+    const perEpisode = {};
+    const cumulative = {};
+    const totals = {};
+    keys.forEach(k => { perEpisode[k] = []; cumulative[k] = []; totals[k] = 0; });
+
+    eps.forEach(() => keys.forEach(k => { perEpisode[k].push(0); }));
+
+    eps.forEach((ep, i) => {
+      const scores = ep.scores || {};
+      Object.keys(scores).forEach(name => {
+        const v = scores[name];
+        if (typeof v !== 'number') return;
+        const k = keyOf(name);
+        if (k == null || !(k in perEpisode)) return;
+        perEpisode[k][i] += v;
+      });
+    });
+
+    keys.forEach(k => {
+      let running = 0;
+      cumulative[k] = perEpisode[k].map(v => { running += v; return running; });
+      totals[k] = running;
+    });
+
+    return { episodes: labels, keys, perEpisode, cumulative, totals };
+  },
+
+  // Points by manager (drafter): each drafter's castaways summed per episode.
+  pointsByManager(drafters) {
+    const owner = {};
+    drafters.forEach(d => this.playersByDrafter(d).forEach(p => { owner[p.name] = d; }));
+    return this._statsBy(name => owner[name] || null, drafters);
+  },
+
+  // Points by tribe: every castaway of a tribe summed, regardless of drafter.
+  pointsByTribe(tribes) {
+    const list = (tribes && tribes.length)
+      ? tribes
+      : [...new Set((this.season ? this.season.players : []).map(p => p.tribe))];
+    const tribeOf = {};
+    (this.season ? this.season.players : []).forEach(p => { tribeOf[p.name] = p.tribe; });
+    return this._statsBy(name => tribeOf[name] || null, list);
+  },
+
+  // Points by castaway: each player summed per episode. Series ordered by
+  // current cumulative points descending (the table's primary sort).
+  pointsByCastaway() {
+    const names = (this.season ? this.season.players : []).map(p => p.name);
+    const stats = this._statsBy(name => (names.includes(name) ? name : null), names);
+    const ordered = names.slice().sort((a, b) => stats.totals[b] - stats.totals[a]);
+    return Object.assign({}, stats, { keys: ordered });
   },
 
   // Generic tribe colors, assigned by a tribe's index in season.meta.tribes.

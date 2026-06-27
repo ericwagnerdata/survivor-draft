@@ -9,7 +9,7 @@
 
 const DRAFTERS = ['Eric', 'Kris', 'Kelly'];
 const TRIBES = ['Vatu', 'Cila', 'Kalo'];
-const VIEWS = ['draft', 'standings', 'cast', 'team', 'admin'];
+const VIEWS = ['draft', 'standings', 'stats', 'cast', 'team', 'admin'];
 const SEASON_KEY = 'sdp.season';
 
 const view = document.getElementById('view');
@@ -36,6 +36,13 @@ function esc(s) {
 function tribeBadge(tribe, cls) {
   const c = DataStore.tribeColor(tribe);
   return `<span class="${cls}" style="background:${c.bg};color:${c.text}">${esc(tribe)}</span>`;
+}
+
+// Small visible reveal indicator so viewers know where the spoiler gate stops.
+// Only shown once a season has visible episodes.
+function revealIndicator() {
+  if (!DataStore.hasAired()) return '';
+  return `<div class="reveal-note">Showing through episode ${esc(DataStore.currentEpisode())}</div>`;
 }
 
 function photoCard(p) {
@@ -127,7 +134,7 @@ function renderStandings() {
       <div class="standing-chev">&rsaquo;</div>
     </a>`).join('');
 
-  const episodes = DataStore.effectiveEpisodes();
+  const episodes = DataStore.visibleEpisodes();
   const summary = aired
     ? `${episodes.length} ${episodes.length === 1 ? 'episode' : 'episodes'} logged.`
     : DataStore.isDrafted()
@@ -148,6 +155,7 @@ function renderStandings() {
 
   view.innerHTML = `
     <div class="section-label">Standings</div>
+    ${revealIndicator()}
     <p class="summary">${esc(summary)}</p>
     ${banner}
     <div class="standings">${list}</div>
@@ -188,6 +196,126 @@ function renderEpisodeLog(episodes) {
   return `
     <div class="section-label" style="margin-top:26px">Episode log</div>
     <div class="episode-log">${rows}</div>`;
+}
+
+/* ---- Stats tab ----
+   Three groups (By Manager / By Team / By Player), each with a per-episode and
+   a cumulative view, a chart, and a table with a Sum row. All gated to
+   visibleEpisodes via the DataStore stats helpers. UI state (which group, which
+   mode) lives across re-renders below. */
+
+let statsState = { group: 'manager', mode: 'cumulative' };
+
+// Build a stats dataset + its color function for the active group.
+function statsForGroup(group) {
+  const meta = DataStore.season.meta;
+  const drafters = Array.isArray(meta.drafters) ? meta.drafters : DRAFTERS;
+  const tribes = (Array.isArray(meta.tribes) && meta.tribes.length)
+    ? meta.tribes
+    : [...new Set(DataStore.season.players.map(p => p.tribe))];
+
+  if (group === 'team') {
+    return {
+      data: DataStore.pointsByTribe(tribes),
+      colorOf: name => DataStore.tribeColor(name).base
+    };
+  }
+  if (group === 'player') {
+    // Color each castaway by their tribe so the dense set stays readable.
+    const tribeOf = {};
+    DataStore.season.players.forEach(p => { tribeOf[p.name] = p.tribe; });
+    return {
+      data: DataStore.pointsByCastaway(),
+      colorOf: name => DataStore.tribeColor(tribeOf[name]).base
+    };
+  }
+  // Default: by manager (drafter), using the fixed drafter palette.
+  const DRAFTER_HEX = { Eric: '#D4A017', Kris: '#7B68EE', Kelly: '#C0226A' };
+  return {
+    data: DataStore.pointsByManager(drafters),
+    colorOf: name => DRAFTER_HEX[name] || '#888'
+  };
+}
+
+// A rows=episodes, columns=entities table with a Sum total row. mode picks
+// per-episode points or the cumulative running total per cell.
+function statsTable(stats, mode, colorOf) {
+  const { episodes, keys } = stats;
+  const cellSource = mode === 'cumulative' ? stats.cumulative : stats.perEpisode;
+
+  const head = keys.map(k =>
+    `<th style="color:${colorOf(k)}">${esc(k)}</th>`).join('');
+
+  const body = episodes.map((epNum, i) => {
+    const cells = keys.map(k => `<td>${cellSource[k][i]}</td>`).join('');
+    return `<tr><th class="stats-rowhead">Ep ${esc(epNum)}</th>${cells}</tr>`;
+  }).join('');
+
+  // Sum row: per-episode totals add up to the grand total; cumulative's final
+  // value already is the grand total, so the Sum row matches in both modes.
+  const sumCells = keys.map(k => `<td>${stats.totals[k]}</td>`).join('');
+
+  return `
+    <div class="stats-table-wrap">
+      <table class="stats-table">
+        <thead><tr><th class="stats-rowhead">Episode</th>${head}</tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr><th class="stats-rowhead">Sum</th>${sumCells}</tr></tfoot>
+      </table>
+    </div>`;
+}
+
+function renderStats() {
+  const n = DataStore.season.meta.n;
+
+  // Stats only make sense once a season has visible (gated) episodes.
+  if (!DataStore.hasAired()) {
+    view.innerHTML = `
+      <div class="section-label">Stats</div>
+      <div class="preseason-banner">No episodes yet. Stats appear once the season airs and the commissioner logs results.</div>`;
+    return;
+  }
+
+  const groups = [['manager', 'By Manager'], ['team', 'By Team'], ['player', 'By Player']];
+  const modes = [['perEpisode', 'Per episode'], ['cumulative', 'Cumulative']];
+
+  const groupBtns = groups.map(([v, label]) =>
+    `<button class="filter-btn${statsState.group === v ? ' active' : ''}" data-stats-group="${v}">${label}</button>`).join('');
+  const modeBtns = modes.map(([v, label]) =>
+    `<button class="filter-btn${statsState.mode === v ? ' active' : ''}" data-stats-mode="${v}">${label}</button>`).join('');
+
+  const { data, colorOf } = statsForGroup(statsState.group);
+  const table = statsTable(data, statsState.mode, colorOf);
+
+  view.innerHTML = `
+    <div class="section-label">Stats</div>
+    ${revealIndicator()}
+    <div class="filter-group">
+      <div class="filter-caption">Group</div>
+      <div class="filter-row">${groupBtns}</div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-caption">View</div>
+      <div class="filter-row">${modeBtns}</div>
+    </div>
+    <div class="chart-wrap"><canvas id="stats-chart"></canvas></div>
+    ${table}`;
+
+  const canvas = view.querySelector('#stats-chart');
+  if (canvas) {
+    if (statsState.mode === 'cumulative') {
+      Charts.cumulativeLines(canvas, data.episodes, data.keys, data.cumulative, colorOf);
+    } else {
+      Charts.perEpisodeBars(canvas, data.episodes, data.keys, data.perEpisode, colorOf);
+    }
+  }
+
+  view.querySelectorAll('[data-stats-group]').forEach(b => {
+    b.addEventListener('click', () => { statsState.group = b.dataset.statsGroup; renderStats(); });
+  });
+  view.querySelectorAll('[data-stats-mode]').forEach(b => {
+    b.addEventListener('click', () => { statsState.mode = b.dataset.statsMode; renderStats(); });
+  });
 }
 
 function renderCast() {
@@ -384,9 +512,19 @@ function renderAdminForm() {
       </div>`;
   }).join('');
 
+  // Shared spoiler cutoff control. Clamped 0..highest entered. Default = max.
+  const highest = episodes.length ? Math.max(...episodes.map(e => e.episode)) : 0;
+  const cutoff = Math.min(DataStore.currentEpisode(), highest);
+
   view.innerHTML = `
     <div class="section-label">Commissioner</div>
-    <p class="summary">Working copy in this browser. Standings, chart, and log read it live. Export when ready to commit results.json.</p>
+    <p class="summary">Working copy in this browser. Standings, stats, chart, and log read it live. Export when ready to commit results.json.</p>
+
+    <div class="reveal-control">
+      <label class="admin-field" for="ep-cutoff"><span>Pool is caught up through episode</span>
+        <input id="ep-cutoff" type="number" inputmode="numeric" min="0" max="${esc(highest)}" value="${esc(cutoff)}"></label>
+      <p class="export-note">Nothing past this episode shows on Standings, Stats, the chart, or the log. Raise it after everyone has watched.</p>
+    </div>
 
     <div class="admin-ep-list">${epList}</div>
 
@@ -451,12 +589,36 @@ function wireAdmin(editing, activePlayers) {
       e.preventDefault();
       const ep = collectEpisodeFromForm(activePlayers);
       if (!Number.isFinite(ep.episode) || ep.episode < 1) { window.alert('Enter a valid episode number.'); return; }
-      const episodes = DataStore.effectiveEpisodes().filter(x => x.episode !== ep.episode);
+      const prior = DataStore.effectiveEpisodes();
+      const priorMax = prior.length ? Math.max(...prior.map(e => e.episode)) : 0;
+      const priorCutoff = DataStore.currentEpisode();
+      const episodes = prior.filter(x => x.episode !== ep.episode);
       episodes.push(ep);
-      DataStore.saveLocalResults(episodes);
+      const newMax = Math.max(...episodes.map(e => e.episode));
+      // If the cutoff was already keeping pace with the latest episode, advance
+      // it to include the newly entered one (default = highest entered). If the
+      // commissioner had deliberately held the cutoff back, leave it where it is.
+      const cutoff = (priorCutoff >= priorMax) ? newMax : priorCutoff;
+      DataStore.saveLocalResults(episodes, cutoff);
       adminEditingEp = null;
       renderAdminForm();
     });
+  }
+
+  // Spoiler cutoff: clamp 0..highest, persist to the working copy, re-render so
+  // every gated view (and the reveal indicator) updates immediately.
+  const cutoffInput = view.querySelector('#ep-cutoff');
+  if (cutoffInput) {
+    const applyCutoff = () => {
+      const episodes = DataStore.effectiveEpisodes();
+      const highest = episodes.length ? Math.max(...episodes.map(e => e.episode)) : 0;
+      let val = Number(cutoffInput.value);
+      if (!Number.isFinite(val)) val = highest;
+      val = Math.max(0, Math.min(highest, Math.round(val)));
+      DataStore.saveLocalResults(episodes, val);
+      renderAdminForm();
+    };
+    cutoffInput.addEventListener('change', applyCutoff);
   }
 
   view.querySelectorAll('[data-admin-edit]').forEach(b => {
@@ -487,7 +649,9 @@ function wireAdmin(editing, activePlayers) {
 // Full results.json content from the effective episodes (schema preserved).
 function resultsJSON() {
   const episodes = DataStore.effectiveEpisodes().slice().sort((a, b) => a.episode - b.episode);
-  return JSON.stringify({ season: DataStore.season.meta.n, episodes }, null, 2) + '\n';
+  return JSON.stringify(
+    { season: DataStore.season.meta.n, currentEpisode: DataStore.currentEpisode(), episodes },
+    null, 2) + '\n';
 }
 
 function copyResults(btn) {
@@ -568,6 +732,7 @@ function buildTabs(n) {
   tabs.innerHTML = [
     ['draft', 'Draft'],
     ['standings', 'Standings'],
+    ['stats', 'Stats'],
     ['cast', 'Full Cast']
   ].map(([v, label]) => `<a href="#/${n}/${v}" data-tab="${v}">${label}</a>`).join('');
 }
@@ -607,6 +772,7 @@ async function route() {
   setActiveTab(r.view);
 
   if (r.view === 'draft') renderDraft();
+  else if (r.view === 'stats') renderStats();
   else if (r.view === 'cast') renderCast();
   else if (r.view === 'team') renderTeam(r.arg || 'Eric');
   else if (r.view === 'admin') { adminEditingEp = null; renderAdmin(); }

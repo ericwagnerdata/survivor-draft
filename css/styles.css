@@ -350,6 +350,45 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .log-pts-num { font-family: 'Cinzel Decorative', serif; font-size: 18px; color: var(--light); }
 .log-pts-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
 
+/* Spoiler-gate reveal indicator (Standings + Stats headers) */
+.reveal-note {
+  display: inline-block; margin-bottom: 14px;
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold); border: 1px solid rgba(212,160,23,0.3);
+  border-radius: 3px; padding: 4px 10px; background: rgba(212,160,23,0.06);
+}
+
+/* Commissioner reveal cutoff control */
+.reveal-control {
+  background: var(--smoke); border: 1px solid rgba(212,160,23,0.25);
+  border-radius: 6px; padding: 12px 14px; margin-bottom: 18px;
+}
+.reveal-control .admin-field { max-width: 320px; }
+.reveal-control .export-note { margin-bottom: 0; }
+
+/* Stats tables (rows = episodes, columns = entities, Sum total row) */
+.stats-table-wrap { margin-top: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.stats-table {
+  border-collapse: collapse; width: 100%; min-width: 320px;
+  font-family: 'Lato', sans-serif; font-size: 12px;
+}
+.stats-table th, .stats-table td {
+  border: 1px solid var(--ash); padding: 6px 10px; text-align: right; white-space: nowrap;
+}
+.stats-table thead th {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--charcoal); color: var(--light);
+}
+.stats-table .stats-rowhead {
+  text-align: left; background: var(--charcoal); color: var(--muted);
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  position: sticky; left: 0;
+}
+.stats-table tbody td { color: var(--light); }
+.stats-table tfoot th, .stats-table tfoot td {
+  font-weight: 700; background: rgba(212,160,23,0.08); color: var(--gold);
+}
+
 /* Commissioner link on the standings view */
 .commish-link {
   display: inline-block; margin-top: 26px;
