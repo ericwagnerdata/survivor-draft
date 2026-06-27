@@ -11,23 +11,12 @@ const Draft = (function () {
   // config-driven otherwise: drafters, picksPerDrafter, and tribes are read
   // from season.meta so future seasons need no code changes.
 
-  /* ---- Eric view PIN gate (casual lock, not real security) ----
+  /* ---- Eric view PIN gate ----
      The draft screen has two views: a Public board (default, shared on draft
      night) and Eric's private cheat sheet (ranks, tiers, "top available"). The
-     Eric view is hidden behind a PIN so people do not stumble onto Eric's
-     rankings on the shared screen. This is NOT real security: the rankings live
-     in the public players.json, so anyone determined can read them. The gate
-     only stops accidental reveals.
-
-     We store a SHA-256 hash of the PIN (never the plaintext) and compare the
-     entered PIN's hash with the Web Crypto API. Default PIN: "survivor".
-
-     To change the PIN: compute the SHA-256 hex of the new PIN and paste it into
-     ERIC_PIN_HASH below. One-liners:
-       Browser console: crypto.subtle.digest('SHA-256', new TextEncoder().encode('YOURPIN')).then(b => console.log([...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('')))
-       Node / git-bash: printf '%s' 'YOURPIN' | sha256sum                            */
-  const ERIC_PIN_HASH = '7a01ac37408614bcf58069bb6b6a543f6c473cdded552c491de4eb36aacce235'; // "survivor"
-  const UNLOCK_KEY = 'sdp.draft.ericUnlocked'; // sessionStorage flag, per browser session
+     Eric view is hidden behind the shared PinGate (js/data.js) so people do not
+     stumble onto Eric's rankings on the shared screen. The same gate guards the
+     commissioner admin route. See PinGate for the PIN and how to change it. */
 
   let picks = [];        // ordered: [{ drafter, name }]
   let snakeOrder = [];   // index into drafters[] for each pick slot
@@ -45,20 +34,9 @@ const Draft = (function () {
     return 'sdp.draft.' + DataStore.season.meta.n;
   }
 
-  // Has Eric's view been unlocked this session? Remembered so toggling back and
-  // forth between Public and Eric does not re-prompt for the PIN.
-  function isUnlocked() {
-    try { return sessionStorage.getItem(UNLOCK_KEY) === '1'; } catch (e) { return false; }
-  }
-  function setUnlocked() {
-    try { sessionStorage.setItem(UNLOCK_KEY, '1'); } catch (e) { /* ignore */ }
-  }
-
-  // SHA-256 hex of a string via the built-in Web Crypto API (no libraries).
-  async function sha256Hex(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
-  }
+  // Has Eric's view been unlocked this session? Delegates to the shared PinGate
+  // so the draft and the admin route share one unlock flag.
+  function isUnlocked() { return PinGate.isUnlocked(); }
 
   // Snake order: round 0 in drafter order, round 1 reversed, alternating.
   function buildSnakeOrder(numDrafters, rounds) {
@@ -202,11 +180,8 @@ const Draft = (function () {
   // Check an entered PIN against the stored hash. Correct -> unlock + Eric view.
   // Wrong -> stay on the public board with a gentle error message.
   async function submitPin(value) {
-    const entered = (value || '').trim();
-    let ok = false;
-    try { ok = (await sha256Hex(entered)) === ERIC_PIN_HASH; } catch (e) { ok = false; }
+    const ok = await PinGate.verify(value);
     if (ok) {
-      setUnlocked();
       mode = 'eric';
       pinPrompt = false;
       pinError = false;

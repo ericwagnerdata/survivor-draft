@@ -325,6 +325,90 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 
 .pick-num { font-family: 'Cinzel Decorative', serif; font-size: 11px; color: var(--muted); margin-top: 6px; }
 
+/* Standings-over-time chart */
+.chart-wrap {
+  position: relative; height: 280px; width: 100%;
+  background: var(--charcoal); border: 1px solid var(--ash);
+  border-radius: 8px; padding: 12px 10px;
+}
+
+/* Episode log */
+.episode-log { display: flex; flex-direction: column; gap: 8px; }
+.log-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--charcoal); border: 1px solid var(--ash);
+  border-radius: 6px; padding: 11px 14px;
+}
+.log-num {
+  font-family: 'Cinzel Decorative', serif; font-size: 18px; color: var(--gold);
+  width: 28px; text-align: center; flex-shrink: 0;
+}
+.log-info { flex: 1; min-width: 0; }
+.log-title { font-family: 'Cinzel', serif; font-size: 13px; }
+.log-sub { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+.log-pts { text-align: right; flex-shrink: 0; }
+.log-pts-num { font-family: 'Cinzel Decorative', serif; font-size: 18px; color: var(--light); }
+.log-pts-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+/* Commissioner link on the standings view */
+.commish-link {
+  display: inline-block; margin-top: 26px;
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent;
+}
+.commish-link:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* Commissioner admin form */
+.admin-ep-list { display: flex; flex-direction: column; gap: 6px; }
+.admin-ep-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--charcoal); border: 1px solid var(--ash); border-radius: 5px; padding: 8px 12px;
+}
+.admin-ep-row.editing { border-color: var(--gold); background: rgba(212,160,23,0.06); }
+.admin-ep-num { font-family: 'Cinzel Decorative', serif; font-size: 15px; color: var(--gold); width: 22px; text-align: center; flex-shrink: 0; }
+.admin-ep-info { flex: 1; min-width: 0; }
+.admin-ep-title { font-family: 'Cinzel', serif; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-ep-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+.admin-form { display: flex; flex-direction: column; gap: 10px; }
+.admin-field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.admin-field { display: flex; flex-direction: column; gap: 5px; flex: 1 1 140px; }
+.admin-field > span { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.admin-field input {
+  background: var(--charcoal); color: var(--light); border: 1px solid var(--ash);
+  border-radius: 3px; padding: 8px 10px; font-family: 'Lato', sans-serif; font-size: 13px;
+}
+.admin-field input:focus { outline: none; border-color: var(--gold); }
+.admin-field input[readonly] { opacity: 0.6; }
+
+.admin-team-block { margin-bottom: 10px; }
+.admin-team-head {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 6px 8px; border-bottom: 1px solid var(--ash); margin-bottom: 6px;
+}
+.admin-team-head.eric  { color: var(--eric);  }
+.admin-team-head.kris  { color: var(--kris);  }
+.admin-team-head.kelly { color: var(--kelly); }
+.admin-player-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 8px;
+  background: var(--charcoal); border: 1px solid var(--ash); border-radius: 4px; margin-bottom: 4px;
+}
+.admin-player-name { flex: 1; min-width: 0; font-family: 'Cinzel', serif; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-score {
+  width: 64px; flex-shrink: 0; background: var(--smoke); color: var(--light);
+  border: 1px solid var(--ash); border-radius: 3px; padding: 6px 8px;
+  font-family: 'Lato', sans-serif; font-size: 13px; text-align: center;
+}
+.admin-score:focus { outline: none; border-color: var(--gold); }
+.admin-elim { display: flex; align-items: center; gap: 4px; flex-shrink: 0; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+.admin-elim input { accent-color: var(--ember); }
+
+@media (max-width: 480px) {
+  .chart-wrap { height: 240px; }
+  .admin-player-name { font-size: 11px; }
+  .admin-score { width: 56px; }
+}
+
 /* Footer */
 .site-footer {
   text-align: center; padding: 18px 16px 30px; color: var(--muted);

@@ -9,7 +9,7 @@
 
 const DRAFTERS = ['Eric', 'Kris', 'Kelly'];
 const TRIBES = ['Vatu', 'Cila', 'Kalo'];
-const VIEWS = ['draft', 'standings', 'cast', 'team'];
+const VIEWS = ['draft', 'standings', 'cast', 'team', 'admin'];
 const SEASON_KEY = 'sdp.season';
 
 const view = document.getElementById('view');
@@ -41,10 +41,12 @@ function tribeBadge(tribe, cls) {
 function photoCard(p) {
   // Undrafted seasons (e.g. the demo) have drafter:null, so guard the class
   // and only show the drafter badge once a player has been drafted.
+  // Elimination is derived from the effective episodes, not the static field.
   const drafterClass = p.drafter ? p.drafter.toLowerCase() : '';
-  const elimClass = p.eliminated ? ' eliminated' : '';
-  const elimTag = p.eliminated
-    ? `<div class="elim-tag">Out, episode ${esc(p.eliminatedEpisode)}</div>`
+  const elim = DataStore.eliminationInfo(p.name);
+  const elimClass = elim.eliminated ? ' eliminated' : '';
+  const elimTag = elim.eliminated
+    ? `<div class="elim-tag">Out, episode ${esc(elim.episode)}</div>`
     : '';
   const drafterBadge = p.drafter
     ? `<span class="drafter-badge ${drafterClass}">${esc(p.drafter)}</span>`
@@ -125,17 +127,67 @@ function renderStandings() {
       <div class="standing-chev">&rsaquo;</div>
     </a>`).join('');
 
+  const episodes = DataStore.effectiveEpisodes();
   const summary = aired
-    ? `${DataStore.season.results.episodes.length} episodes logged.`
+    ? `${episodes.length} ${episodes.length === 1 ? 'episode' : 'episodes'} logged.`
     : DataStore.isDrafted()
       ? `${DataStore.season.players.length} castaways drafted across 3 teams. The season has not aired.`
       : `Draft is not complete yet. Open the Draft tab to run it.`;
+
+  // Chart + episode log only once a season has aired, so there is no empty chart.
+  const chartBlock = aired ? `
+    <div class="section-label" style="margin-top:26px">Points over time</div>
+    <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>` : '';
+
+  const logBlock = aired ? renderEpisodeLog(episodes) : '';
+
+  // A small commissioner link for Eric (PIN-gated route). Only on drafted seasons.
+  const adminLink = DataStore.isDrafted()
+    ? `<a class="commish-link" href="#/${n}/admin">Commissioner</a>`
+    : '';
 
   view.innerHTML = `
     <div class="section-label">Standings</div>
     <p class="summary">${esc(summary)}</p>
     ${banner}
-    <div class="standings">${list}</div>`;
+    <div class="standings">${list}</div>
+    ${chartBlock}
+    ${logBlock}
+    ${adminLink}`;
+
+  if (aired) {
+    const canvas = view.querySelector('#trend-chart');
+    if (canvas) Charts.standingsTrend(canvas, DataStore.cumulativeStandings(DRAFTERS));
+  }
+}
+
+// Episode log: numbered rows, most recent first, with eliminations and the
+// total points awarded that episode.
+function renderEpisodeLog(episodes) {
+  const sorted = episodes.slice().sort((a, b) => b.episode - a.episode);
+  const rows = sorted.map(ep => {
+    const elims = Array.isArray(ep.eliminated) && ep.eliminated.length
+      ? ep.eliminated.map(n => esc(n)).join(', ')
+      : 'No elimination';
+    const date = ep.airDate ? esc(ep.airDate) : '';
+    const title = ep.title ? esc(ep.title) : `Episode ${esc(ep.episode)}`;
+    return `
+      <div class="log-row">
+        <div class="log-num">${esc(ep.episode)}</div>
+        <div class="log-info">
+          <div class="log-title">${title}</div>
+          <div class="log-sub">${date ? date + ' &middot; ' : ''}Out: ${elims}</div>
+        </div>
+        <div class="log-pts">
+          <div class="log-pts-num">${DataStore.episodePoints(ep)}</div>
+          <div class="log-pts-label">pts</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="section-label" style="margin-top:26px">Episode log</div>
+    <div class="episode-log">${rows}</div>`;
 }
 
 function renderCast() {
@@ -198,17 +250,20 @@ function renderTeam(drafter) {
     return `<a class="team-tab ${d.toLowerCase()}${active}" href="#/${n}/team/${d}">${d}</a>`;
   }).join('');
 
-  const cards = team.map(p => `
-    <div class="player-card ${dc}${p.eliminated ? ' eliminated' : ''}">
+  const cards = team.map(p => {
+    const elim = DataStore.eliminationInfo(p.name);
+    return `
+    <div class="player-card ${dc}${elim.eliminated ? ' eliminated' : ''}">
       <div class="card-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
       <div class="card-name">${esc(p.name)}</div>
       <div class="card-meta">Age ${esc(p.age)}</div>
       <div class="card-occupation">${esc(p.occupation)}</div>
       <div class="card-seasons">${esc(p.seasons)}</div>
       <div class="badge-row">${tribeBadge(p.tribe, 'tribe-badge')}</div>
-      ${p.eliminated ? `<div class="elim-tag">Out, episode ${esc(p.eliminatedEpisode)}</div>` : ''}
+      ${elim.eliminated ? `<div class="elim-tag">Out, episode ${esc(elim.episode)}</div>` : ''}
       <div class="pick-num">Pick ${esc(p.pick)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   view.innerHTML = `
     <div class="team-switch">${switcher}</div>
@@ -223,6 +278,251 @@ function renderTeam(drafter) {
       </div>
     </div>
     <div class="card-grid">${cards}</div>`;
+}
+
+/* ---- Commissioner admin (PIN-gated, Eric only) ----
+   Edits the localStorage working copy of results (sdp.results.<n>). Everything
+   reads the effective episodes, so saving here updates standings/chart/log
+   immediately. Export emits the full results.json to copy/download and commit;
+   clear reverts to the committed file. Reuses the shared PinGate. */
+
+// Which episode is open in the form: a number, or null for "new episode".
+let adminEditingEp = null;
+
+function renderAdmin() {
+  const n = DataStore.season.meta.n;
+
+  // Only drafted seasons can have episodes entered.
+  if (!DataStore.isDrafted()) {
+    view.innerHTML = `
+      <div class="section-label">Commissioner</div>
+      <div class="preseason-banner">Draft this season first. Episodes can only be entered once the season is drafted.</div>`;
+    return;
+  }
+
+  // PIN gate: locked -> prompt; unlocked -> the form.
+  if (!PinGate.isUnlocked()) {
+    view.innerHTML = `
+      <div class="section-label">Commissioner</div>
+      <p class="summary">This area is for the commissioner. Enter the PIN to add or edit episode results.</p>
+      <div class="pin-prompt">
+        <label class="pin-label" for="admin-pin">Commissioner PIN</label>
+        <div class="pin-row">
+          <input id="admin-pin" class="pin-input" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN">
+          <button class="btn-export" data-act="admin-unlock">Unlock</button>
+        </div>
+        <div class="pin-error" id="admin-pin-error" style="display:none">Incorrect PIN.</div>
+      </div>`;
+    const input = view.querySelector('#admin-pin');
+    const submit = () => {
+      PinGate.verify(input.value).then(ok => {
+        if (ok) renderAdmin();
+        else { const e = view.querySelector('#admin-pin-error'); if (e) e.style.display = 'block'; }
+      });
+    };
+    view.querySelector('[data-act="admin-unlock"]').addEventListener('click', submit);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+    input.focus();
+    return;
+  }
+
+  renderAdminForm();
+}
+
+// Build (or rebuild) the unlocked commissioner panel.
+function renderAdminForm() {
+  const n = DataStore.season.meta.n;
+  const episodes = DataStore.effectiveEpisodes().slice().sort((a, b) => a.episode - b.episode);
+
+  // The episode being edited, or a blank one with the next number suggested.
+  const nextNum = episodes.length ? Math.max(...episodes.map(e => e.episode)) + 1 : 1;
+  const editing = (adminEditingEp !== null)
+    ? episodes.find(e => e.episode === adminEditingEp) || null
+    : null;
+  const formEp = editing || { episode: nextNum, title: '', airDate: '', eliminated: [], scores: {} };
+
+  // Existing-episodes list with edit/delete.
+  const epList = episodes.length ? episodes.map(ep => `
+    <div class="admin-ep-row ${editing && editing.episode === ep.episode ? 'editing' : ''}">
+      <div class="admin-ep-num">${esc(ep.episode)}</div>
+      <div class="admin-ep-info">
+        <div class="admin-ep-title">${esc(ep.title || ('Episode ' + ep.episode))}</div>
+        <div class="admin-ep-sub">${DataStore.episodePoints(ep)} pts &middot; ${(ep.eliminated && ep.eliminated.length) ? esc(ep.eliminated.join(', ')) : 'no elimination'}</div>
+      </div>
+      <button class="btn-undo" data-admin-edit="${esc(ep.episode)}">Edit</button>
+      <button class="btn-reset" data-admin-del="${esc(ep.episode)}">Delete</button>
+    </div>`).join('') : `<p class="meta-line">No episodes yet. Add the first one below.</p>`;
+
+  // Active drafted players (not yet eliminated in a PRIOR episode). When editing
+  // an episode we still show players eliminated *in that same episode* so the box
+  // stays editable; players knocked out earlier drop off.
+  const priorElims = new Set();
+  for (const ep of episodes) {
+    if (formEp.episode !== undefined && ep.episode >= formEp.episode) continue;
+    if (Array.isArray(ep.eliminated)) ep.eliminated.forEach(nm => priorElims.add(nm));
+  }
+  const activePlayers = DRAFTERS.flatMap(d => DataStore.playersByDrafter(d))
+    .filter(p => !priorElims.has(p.name));
+
+  const playerRows = DRAFTERS.map(d => {
+    const team = DataStore.playersByDrafter(d).filter(p => !priorElims.has(p.name));
+    if (!team.length) return '';
+    const rows = team.map(p => {
+      const score = (formEp.scores && typeof formEp.scores[p.name] === 'number') ? formEp.scores[p.name] : 0;
+      const out = Array.isArray(formEp.eliminated) && formEp.eliminated.includes(p.name);
+      return `
+        <div class="admin-player-row">
+          <span class="admin-player-name">${esc(p.name)}</span>
+          <input class="admin-score" type="number" inputmode="numeric" data-score="${esc(p.name)}" value="${score}">
+          <label class="admin-elim"><input type="checkbox" data-elim="${esc(p.name)}" ${out ? 'checked' : ''}> out</label>
+        </div>`;
+    }).join('');
+    return `
+      <div class="admin-team-block">
+        <div class="admin-team-head ${d.toLowerCase()}">${esc(d)}</div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  view.innerHTML = `
+    <div class="section-label">Commissioner</div>
+    <p class="summary">Working copy in this browser. Standings, chart, and log read it live. Export when ready to commit results.json.</p>
+
+    <div class="admin-ep-list">${epList}</div>
+
+    <div class="section-label" style="margin-top:24px">${editing ? 'Edit episode ' + esc(editing.episode) : 'New episode'}</div>
+    <form id="admin-form" class="admin-form">
+      <div class="admin-field-row">
+        <label class="admin-field"><span>Episode #</span>
+          <input id="ep-num" type="number" inputmode="numeric" value="${esc(formEp.episode)}" ${editing ? 'readonly' : ''}></label>
+        <label class="admin-field"><span>Air date</span>
+          <input id="ep-date" type="date" value="${esc(formEp.airDate || '')}"></label>
+      </div>
+      <label class="admin-field"><span>Title</span>
+        <input id="ep-title" type="text" value="${esc(formEp.title || '')}" placeholder="Episode title"></label>
+
+      <div class="avail-label" style="margin-top:16px">Points and eliminations</div>
+      ${playerRows}
+
+      <div class="draft-controls" style="margin-top:16px">
+        ${editing ? `<button type="button" class="btn-undo" data-act="admin-cancel">Cancel edit</button>` : ''}
+        <button type="submit" class="btn-export">${editing ? 'Update episode' : 'Save episode'}</button>
+      </div>
+    </form>
+
+    <div class="export-panel">
+      <div class="avail-label">Export</div>
+      <p class="export-note">Export the effective results.json, then save it to <code>data/seasons/${esc(n)}/results.json</code> and commit. That published file is what everyone sees.</p>
+      <div class="draft-controls">
+        <button class="btn-export" data-act="results-copy">Copy results.json</button>
+        <button class="btn-export" data-act="results-download">Download results.json</button>
+        <button class="btn-reset" data-act="results-clear">Clear local results</button>
+      </div>
+    </div>`;
+
+  wireAdmin(editing, activePlayers);
+}
+
+function collectEpisodeFromForm(activePlayers) {
+  const episode = Number(view.querySelector('#ep-num').value);
+  const title = view.querySelector('#ep-title').value.trim();
+  const airDate = view.querySelector('#ep-date').value;
+  const scores = {};
+  const eliminated = [];
+  activePlayers.forEach(p => {
+    const sEl = view.querySelector(`[data-score="${cssAttr(p.name)}"]`);
+    const eEl = view.querySelector(`[data-elim="${cssAttr(p.name)}"]`);
+    const val = sEl ? Number(sEl.value) : 0;
+    scores[p.name] = Number.isFinite(val) ? val : 0;
+    if (eEl && eEl.checked) eliminated.push(p.name);
+  });
+  return { episode, title, airDate, eliminated, scores };
+}
+
+// Escape a value for use inside a [data-x="..."] attribute selector.
+function cssAttr(s) {
+  return String(s).replace(/["\\]/g, '\\$&');
+}
+
+function wireAdmin(editing, activePlayers) {
+  const form = view.querySelector('#admin-form');
+  if (form) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const ep = collectEpisodeFromForm(activePlayers);
+      if (!Number.isFinite(ep.episode) || ep.episode < 1) { window.alert('Enter a valid episode number.'); return; }
+      const episodes = DataStore.effectiveEpisodes().filter(x => x.episode !== ep.episode);
+      episodes.push(ep);
+      DataStore.saveLocalResults(episodes);
+      adminEditingEp = null;
+      renderAdminForm();
+    });
+  }
+
+  view.querySelectorAll('[data-admin-edit]').forEach(b => {
+    b.addEventListener('click', () => { adminEditingEp = Number(b.dataset.adminEdit); renderAdminForm(); });
+  });
+  view.querySelectorAll('[data-admin-del]').forEach(b => {
+    b.addEventListener('click', () => {
+      const num = Number(b.dataset.adminDel);
+      if (!window.confirm('Delete episode ' + num + '?')) return;
+      const episodes = DataStore.effectiveEpisodes().filter(x => x.episode !== num);
+      DataStore.saveLocalResults(episodes);
+      if (adminEditingEp === num) adminEditingEp = null;
+      renderAdminForm();
+    });
+  });
+
+  view.querySelectorAll('[data-act]').forEach(b => {
+    b.addEventListener('click', () => {
+      const act = b.dataset.act;
+      if (act === 'admin-cancel') { adminEditingEp = null; renderAdminForm(); }
+      else if (act === 'results-copy') copyResults(b);
+      else if (act === 'results-download') downloadResults();
+      else if (act === 'results-clear') clearResults();
+    });
+  });
+}
+
+// Full results.json content from the effective episodes (schema preserved).
+function resultsJSON() {
+  const episodes = DataStore.effectiveEpisodes().slice().sort((a, b) => a.episode - b.episode);
+  return JSON.stringify({ season: DataStore.season.meta.n, episodes }, null, 2) + '\n';
+}
+
+function copyResults(btn) {
+  const text = resultsJSON();
+  const done = ok => {
+    const label = btn.textContent;
+    btn.textContent = ok ? 'Copied' : 'Copy failed';
+    setTimeout(() => { btn.textContent = label; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => done(true), () => done(false));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta); done(ok);
+  }
+}
+
+function downloadResults() {
+  const blob = new Blob([resultsJSON()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'results.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function clearResults() {
+  if (!window.confirm('Clear the local working copy and revert to the committed results.json?')) return;
+  DataStore.clearLocalResults();
+  adminEditingEp = null;
+  renderAdminForm();
 }
 
 /* ---- Routing ---- */
@@ -309,6 +609,7 @@ async function route() {
   if (r.view === 'draft') renderDraft();
   else if (r.view === 'cast') renderCast();
   else if (r.view === 'team') renderTeam(r.arg || 'Eric');
+  else if (r.view === 'admin') { adminEditingEp = null; renderAdmin(); }
   else renderStandings();
   window.scrollTo(0, 0);
 }
