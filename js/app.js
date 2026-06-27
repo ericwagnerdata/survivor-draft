@@ -457,6 +457,18 @@ function renderAdmin() {
   renderAdminForm();
 }
 
+// Names eliminated in episodes strictly BEFORE the given episode number, derived
+// from the effective episodes (players.json stays static). Used for two things:
+// dropping already-out castaways from the form, and the auto out-of-game bonus.
+function priorEliminatedSet(episodes, episodeNum) {
+  const set = new Set();
+  for (const ep of episodes) {
+    if (episodeNum !== undefined && ep.episode >= episodeNum) continue;
+    if (Array.isArray(ep.eliminated)) ep.eliminated.forEach(nm => set.add(nm));
+  }
+  return set;
+}
+
 // Build (or rebuild) the unlocked commissioner panel.
 function renderAdminForm() {
   const n = DataStore.season.meta.n;
@@ -467,7 +479,7 @@ function renderAdminForm() {
   const editing = (adminEditingEp !== null)
     ? episodes.find(e => e.episode === adminEditingEp) || null
     : null;
-  const formEp = editing || { episode: nextNum, title: '', airDate: '', eliminated: [], scores: {} };
+  const formEp = editing || { episode: nextNum, title: '', airDate: '', eliminated: [], scores: {}, events: {} };
 
   // Existing-episodes list with edit/delete.
   const epList = episodes.length ? episodes.map(ep => `
@@ -484,33 +496,15 @@ function renderAdminForm() {
   // Active drafted players (not yet eliminated in a PRIOR episode). When editing
   // an episode we still show players eliminated *in that same episode* so the box
   // stays editable; players knocked out earlier drop off.
-  const priorElims = new Set();
-  for (const ep of episodes) {
-    if (formEp.episode !== undefined && ep.episode >= formEp.episode) continue;
-    if (Array.isArray(ep.eliminated)) ep.eliminated.forEach(nm => priorElims.add(nm));
-  }
+  const priorElims = priorEliminatedSet(episodes, formEp.episode);
   const activePlayers = DRAFTERS.flatMap(d => DataStore.playersByDrafter(d))
     .filter(p => !priorElims.has(p.name));
 
-  const playerRows = DRAFTERS.map(d => {
-    const team = DataStore.playersByDrafter(d).filter(p => !priorElims.has(p.name));
-    if (!team.length) return '';
-    const rows = team.map(p => {
-      const score = (formEp.scores && typeof formEp.scores[p.name] === 'number') ? formEp.scores[p.name] : 0;
-      const out = Array.isArray(formEp.eliminated) && formEp.eliminated.includes(p.name);
-      return `
-        <div class="admin-player-row">
-          <span class="admin-player-name">${esc(p.name)}</span>
-          <input class="admin-score" type="number" inputmode="numeric" data-score="${esc(p.name)}" value="${score}">
-          <label class="admin-elim"><input type="checkbox" data-elim="${esc(p.name)}" ${out ? 'checked' : ''}> out</label>
-        </div>`;
-    }).join('');
-    return `
-      <div class="admin-team-block">
-        <div class="admin-team-head ${d.toLowerCase()}">${esc(d)}</div>
-        ${rows}
-      </div>`;
-  }).join('');
+  // Two entry modes: event-based when scoring.json is loaded, else the legacy
+  // raw-number form so a season with no scoring config still works.
+  const entryBody = DataStore.hasScoring()
+    ? renderEventEntry(formEp, activePlayers, episodes)
+    : renderRawEntry(formEp, activePlayers);
 
   // Shared spoiler cutoff control. Clamped 0..highest entered. Default = max.
   const highest = episodes.length ? Math.max(...episodes.map(e => e.episode)) : 0;
@@ -539,8 +533,7 @@ function renderAdminForm() {
       <label class="admin-field"><span>Title</span>
         <input id="ep-title" type="text" value="${esc(formEp.title || '')}" placeholder="Episode title"></label>
 
-      <div class="avail-label" style="margin-top:16px">Points and eliminations</div>
-      ${playerRows}
+      ${entryBody}
 
       <div class="draft-controls" style="margin-top:16px">
         ${editing ? `<button type="button" class="btn-undo" data-act="admin-cancel">Cancel edit</button>` : ''}
@@ -558,13 +551,140 @@ function renderAdminForm() {
       </div>
     </div>`;
 
-  wireAdmin(editing, activePlayers);
+  wireAdmin(editing, activePlayers, episodes);
 }
 
-function collectEpisodeFromForm(activePlayers) {
+// Legacy raw-number entry: a points box + an "out" checkbox per active player.
+// Used only when the season has no scoring.json (backward compatibility).
+function renderRawEntry(formEp, activePlayers) {
+  const playerRows = DRAFTERS.map(d => {
+    const team = DataStore.playersByDrafter(d).filter(p => activePlayers.some(a => a.name === p.name));
+    if (!team.length) return '';
+    const rows = team.map(p => {
+      const score = (formEp.scores && typeof formEp.scores[p.name] === 'number') ? formEp.scores[p.name] : 0;
+      const out = Array.isArray(formEp.eliminated) && formEp.eliminated.includes(p.name);
+      return `
+        <div class="admin-player-row">
+          <span class="admin-player-name">${esc(p.name)}</span>
+          <input class="admin-score" type="number" inputmode="numeric" data-score="${esc(p.name)}" value="${score}">
+          <label class="admin-elim"><input type="checkbox" data-elim="${esc(p.name)}" ${out ? 'checked' : ''}> out</label>
+        </div>`;
+    }).join('');
+    return `
+      <div class="admin-team-block">
+        <div class="admin-team-head ${d.toLowerCase()}">${esc(d)}</div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="avail-label" style="margin-top:16px">Points and eliminations</div>
+    ${playerRows}`;
+}
+
+// Event-based entry: organized BY EVENT (grouped per scoring.json). Each event
+// shows a chip per active castaway; tap to toggle who did it this episode. A
+// separate block records who was voted out. Scores are computed on save from the
+// checked events plus the auto out-of-game bonus.
+function renderEventEntry(formEp, activePlayers, episodes) {
+  const scoring = DataStore.season.scoring;
+  const selected = (formEp.events && typeof formEp.events === 'object') ? formEp.events : {};
+
+  // Castaways who already earned a oncePerSeason event (e.g. merge) in an EARLIER
+  // episode, by event id. Drives the soft guard so the same person is not
+  // double-counted for a one-time-only event.
+  const earnedEarlier = {};
+  scoring.events.filter(ev => ev.oncePerSeason).forEach(ev => {
+    const set = new Set();
+    episodes.forEach(ep => {
+      if (formEp.episode !== undefined && ep.episode >= formEp.episode) return;
+      const names = ep.events && Array.isArray(ep.events[ev.id]) ? ep.events[ev.id] : [];
+      names.forEach(nm => set.add(nm));
+    });
+    earnedEarlier[ev.id] = set;
+  });
+
+  // Group events in config order, preserving first-seen group order.
+  const groups = [];
+  const byGroup = {};
+  scoring.events.forEach(ev => {
+    const g = ev.group || 'Other';
+    if (!byGroup[g]) { byGroup[g] = []; groups.push(g); }
+    byGroup[g].push(ev);
+  });
+
+  const chip = (ev, p) => {
+    const names = Array.isArray(selected[ev.id]) ? selected[ev.id] : [];
+    const on = names.includes(p.name);
+    const lockedEarlier = ev.oncePerSeason && earnedEarlier[ev.id] && earnedEarlier[ev.id].has(p.name);
+    const cls = 'event-chip' + (on ? ' on' : '') + (lockedEarlier ? ' earned' : '');
+    const title = lockedEarlier ? ' title="Already earned in an earlier episode"' : '';
+    return `<button type="button" class="${cls}" data-event="${esc(ev.id)}" data-name="${esc(p.name)}"${title}>${esc(p.name)}</button>`;
+  };
+
+  const eventBlocks = groups.map(g => {
+    const rows = byGroup[g].map(ev => {
+      const flags = [];
+      if (ev.oncePerEpisode) flags.push('once per episode');
+      if (ev.oncePerSeason) flags.push('once per season');
+      const flagNote = flags.length ? `<span class="event-flag">${flags.join(', ')}</span>` : '';
+      const chips = activePlayers.map(p => chip(ev, p)).join('');
+      return `
+        <div class="event-row" data-event-row="${esc(ev.id)}">
+          <div class="event-head">
+            <span class="event-label">${esc(ev.label)}</span>
+            <span class="event-pts">${esc(ev.points)} pt${ev.points === 1 ? '' : 's'}</span>
+            ${flagNote}
+          </div>
+          <div class="event-chips">${chips}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="event-group">
+        <div class="event-group-head">${esc(g)}</div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  // Voted-out block: separate from scoring events.
+  const elimChips = activePlayers.map(p => {
+    const out = Array.isArray(formEp.eliminated) && formEp.eliminated.includes(p.name);
+    return `<button type="button" class="event-chip elim${out ? ' on' : ''}" data-elim-chip="${esc(p.name)}">${esc(p.name)}</button>`;
+  }).join('');
+
+  return `
+    <div class="avail-label" style="margin-top:16px">Scoring events</div>
+    <p class="export-note event-help">Tap a castaway under each event they earned this episode. Out-of-game castaways auto-earn ${esc(DataStore.outOfGamePerEpisode())} per later episode (no need to check anything).</p>
+    <div class="event-entry">${eventBlocks}</div>
+    <div class="avail-label" style="margin-top:18px">Voted out this episode</div>
+    <div class="event-chips elim-chips">${elimChips}</div>`;
+}
+
+// Build an episode object from the form. In event mode it reads the checked
+// chips, derives the events map, and computes scores (events + auto out-of-game)
+// via DataStore; in legacy mode it reads the raw points boxes. episodes is the
+// effective episode list, needed to derive prior eliminations for the bonus.
+function collectEpisodeFromForm(activePlayers, episodes) {
   const episode = Number(view.querySelector('#ep-num').value);
   const title = view.querySelector('#ep-title').value.trim();
   const airDate = view.querySelector('#ep-date').value;
+
+  if (DataStore.hasScoring()) {
+    const events = {};
+    view.querySelectorAll('.event-chip[data-event].on').forEach(btn => {
+      const id = btn.dataset.event;
+      (events[id] = events[id] || []).push(btn.dataset.name);
+    });
+    const eliminated = [];
+    view.querySelectorAll('.event-chip[data-elim-chip].on').forEach(btn => {
+      eliminated.push(btn.dataset.elimChip);
+    });
+    const prior = priorEliminatedSet(episodes, episode);
+    const scores = DataStore.computeScoresFromEvents(events, prior);
+    return { episode, title, airDate, eliminated, scores, events };
+  }
+
+  // Legacy raw-number mode.
   const scores = {};
   const eliminated = [];
   activePlayers.forEach(p => {
@@ -582,12 +702,26 @@ function cssAttr(s) {
   return String(s).replace(/["\\]/g, '\\$&');
 }
 
-function wireAdmin(editing, activePlayers) {
+function wireAdmin(editing, activePlayers, episodes) {
+  // Event/elim chips toggle in place (no re-render) so multi-select stays fast
+  // on a phone. A soft guard warns when toggling on a oncePerSeason event a
+  // castaway already earned earlier, but still allows it.
+  view.querySelectorAll('.event-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const turningOn = !btn.classList.contains('on');
+      if (turningOn && btn.classList.contains('earned')) {
+        const ok = window.confirm(btn.dataset.name + ' already earned this once-per-season event in an earlier episode. Add it again anyway?');
+        if (!ok) return;
+      }
+      btn.classList.toggle('on');
+    });
+  });
+
   const form = view.querySelector('#admin-form');
   if (form) {
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const ep = collectEpisodeFromForm(activePlayers);
+      const ep = collectEpisodeFromForm(activePlayers, episodes);
       if (!Number.isFinite(ep.episode) || ep.episode < 1) { window.alert('Enter a valid episode number.'); return; }
       const prior = DataStore.effectiveEpisodes();
       const priorMax = prior.length ? Math.max(...prior.map(e => e.episode)) : 0;

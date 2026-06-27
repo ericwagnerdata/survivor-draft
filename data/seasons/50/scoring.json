@@ -1,0 +1,32 @@
+{
+  "season": 50,
+  "outOfGamePerEpisode": 1,
+  "events": [
+    { "id": "tribe_immunity", "label": "Tribe Immunity win", "points": 3, "group": "Challenges" },
+    { "id": "indiv_immunity", "label": "Individual Immunity win", "points": 2, "group": "Challenges" },
+    { "id": "tribe_reward", "label": "Tribe Reward win", "points": 2, "group": "Challenges" },
+    { "id": "indiv_reward", "label": "Individual Reward win", "points": 1, "group": "Challenges" },
+    { "id": "marooning", "label": "Marooning Challenge win", "points": 1, "group": "Challenges" },
+    { "id": "supply", "label": "Supply Challenge win", "points": 1, "group": "Challenges" },
+    { "id": "journey_challenge", "label": "Journey Challenge win", "points": 1, "group": "Challenges" },
+    { "id": "fire_making", "label": "Final Four Fire-Making win", "points": 2, "group": "Challenges" },
+
+    { "id": "tree_mail", "label": "Read Tree Mail", "points": 2, "group": "Gameplay", "oncePerEpisode": true },
+    { "id": "water_well", "label": "Strategize at Water Well", "points": 1, "group": "Gameplay", "oncePerEpisode": true },
+    { "id": "make_fire", "label": "Make Fire at Camp", "points": 2, "group": "Gameplay", "oncePerEpisode": true },
+    { "id": "find_food", "label": "Find Food", "points": 1, "group": "Gameplay", "oncePerEpisode": true },
+    { "id": "exile", "label": "Go to Exile Island", "points": 1, "group": "Gameplay" },
+    { "id": "journey", "label": "Go on a Journey", "points": 1, "group": "Gameplay", "oncePerEpisode": true },
+    { "id": "merge", "label": "Made the Merge", "points": 2, "group": "Gameplay", "oncePerSeason": true },
+    { "id": "auction", "label": "Survivor Auction attendance", "points": 1, "group": "Gameplay" },
+
+    { "id": "find_clue", "label": "Find Idol or Advantage clue", "points": 1, "group": "Idols/Advantages" },
+    { "id": "play_idol", "label": "Play Idol or Advantage", "points": 2, "group": "Idols/Advantages" },
+    { "id": "gain_idol", "label": "Gain Immunity Idol", "points": 1, "group": "Idols/Advantages" },
+    { "id": "gain_advantage", "label": "Gain Advantage", "points": 1, "group": "Idols/Advantages" },
+    { "id": "shot_in_dark", "label": "Play Shot in the Dark", "points": 2, "group": "Idols/Advantages" },
+    { "id": "gold_coin", "label": "Flip Mr. Beast Gold Coin", "points": 2, "group": "Idols/Advantages" },
+
+    { "id": "love_home", "label": "Gain love from home", "points": 1, "group": "Social" }
+  ]
+}

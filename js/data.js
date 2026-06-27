@@ -21,7 +21,7 @@ const DataStore = {
     if (!meta) throw new Error('Season ' + n + ' not in manifest');
 
     const base = 'data/seasons/' + meta.n + '/';
-    const [players, results] = await Promise.all([
+    const [players, results, scoring] = await Promise.all([
       fetch(base + 'players.json').then(r => {
         if (!r.ok) throw new Error('Could not load players.json for season ' + meta.n);
         return r.json();
@@ -29,11 +29,54 @@ const DataStore = {
       fetch(base + 'results.json').then(r => {
         if (!r.ok) throw new Error('Could not load results.json for season ' + meta.n);
         return r.json();
-      })
+      }),
+      // scoring.json is optional: a season without it falls back to the legacy
+      // raw-number entry form, so a missing file must not break the load.
+      fetch(base + 'scoring.json').then(r => (r.ok ? r.json() : null)).catch(() => null)
     ]);
 
-    this.season = { meta, players, results };
+    this.season = { meta, players, results, scoring };
     return this.season;
+  },
+
+  // True when this season has a usable event-based scoring config loaded.
+  hasScoring() {
+    return !!(this.season && this.season.scoring && Array.isArray(this.season.scoring.events) && this.season.scoring.events.length);
+  },
+
+  // The per-episode "out of game" bonus (config-driven). 0 when not configured.
+  outOfGamePerEpisode() {
+    const v = this.season && this.season.scoring ? this.season.scoring.outOfGamePerEpisode : 0;
+    return typeof v === 'number' ? v : 0;
+  },
+
+  // Compute scores[name] for an episode from its events:{ eventId:[names] } map,
+  // using the season scoring config, then add the auto "out of game" bonus for
+  // any castaway eliminated in a PRIOR episode. priorEliminated is the set of
+  // names knocked out before this episode (derived by the caller). Returns a
+  // fresh { name: points } object. Episodes that carry no events map are left to
+  // their existing scores by the caller (backward compatibility).
+  computeScoresFromEvents(eventsMap, priorEliminated) {
+    const scores = {};
+    const events = (this.season && this.season.scoring && this.season.scoring.events) || [];
+    const pointsById = {};
+    events.forEach(ev => { pointsById[ev.id] = ev.points; });
+    const add = (name, pts) => {
+      if (!name) return;
+      scores[name] = (scores[name] || 0) + pts;
+    };
+    Object.keys(eventsMap || {}).forEach(eventId => {
+      const pts = pointsById[eventId];
+      if (typeof pts !== 'number') return;
+      const names = eventsMap[eventId];
+      if (Array.isArray(names)) names.forEach(nm => add(nm, pts));
+    });
+    // Auto out-of-game bonus: anyone eliminated in a prior episode earns it here.
+    const bonus = this.outOfGamePerEpisode();
+    if (bonus && priorEliminated && typeof priorEliminated.forEach === 'function') {
+      priorEliminated.forEach(nm => add(nm, bonus));
+    }
+    return scores;
   },
 
   // True once every player has a non-empty drafter AND a pick.
