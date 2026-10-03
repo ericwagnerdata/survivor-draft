@@ -340,7 +340,7 @@ const DataStore = {
    accidental reveals on a shared screen.
 
    We store a SHA-256 hash of the PIN (never the plaintext) and compare the
-   entered PIN's hash with the Web Crypto API. Default PIN: "survivor". Unlock
+   entered PIN's hash with the Web Crypto API. Numeric PIN (phones show a keypad). Unlock
    persists per browser session (sessionStorage), session-global not per-season.
 
    To change the PIN: compute the SHA-256 hex of the new PIN and paste it into
@@ -348,7 +348,7 @@ const DataStore = {
      Browser console: crypto.subtle.digest('SHA-256', new TextEncoder().encode('YOURPIN')).then(b => console.log([...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('')))
      Node / git-bash: printf '%s' 'YOURPIN' | sha256sum                            */
 const PinGate = (function () {
-  const ERIC_PIN_HASH = '7a01ac37408614bcf58069bb6b6a543f6c473cdded552c491de4eb36aacce235'; // "survivor"
+  const ERIC_PIN_HASH = '8d30c678193105253b548f92bd2e972c39f192ae7cc3af3812c0d7b3bcc6e1ec';
   const UNLOCK_KEY = 'sdp.draft.ericUnlocked'; // sessionStorage flag, per browser session
 
   function isUnlocked() {
