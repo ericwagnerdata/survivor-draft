@@ -20,7 +20,8 @@ const Draft = (function () {
 
   let picks = [];        // ordered: [{ drafter, name }]
   let snakeOrder = [];   // index into drafters[] for each pick slot
-  let drafters = [];
+  let drafters = [];     // draft order for this draft (a permutation of meta.drafters)
+  let baseDrafters = []; // meta.drafters, the default order
   let tribes = [];
   let picksPerDrafter = 0;
   let totalPicks = 0;
@@ -29,6 +30,7 @@ const Draft = (function () {
   let containerEl = null;
   let mode = 'public';   // 'public' (default) or 'eric'
   let pinError = false;  // true after a wrong PIN, to show a gentle error state
+  let drawResult = '';   // message from the last "closest to the number" draw
 
   function storageKey() {
     return 'sdp.draft.' + DataStore.season.meta.n;
@@ -52,7 +54,8 @@ const Draft = (function () {
 
   function init() {
     const meta = DataStore.season.meta;
-    drafters = Array.isArray(meta.drafters) ? meta.drafters.slice() : [];
+    baseDrafters = Array.isArray(meta.drafters) ? meta.drafters.slice() : [];
+    drafters = baseDrafters.slice();
     tribes = Array.isArray(meta.tribes) ? meta.tribes.slice() : [];
     picksPerDrafter = Number(meta.picksPerDrafter) || 0;
     totalPicks = drafters.length * picksPerDrafter;
@@ -77,6 +80,12 @@ const Draft = (function () {
     let saved;
     try { saved = JSON.parse(raw); } catch (e) { return; }
     if (!saved || !Array.isArray(saved.picks)) return;
+    // Draft order set on draft night (numbers drawn at the table). Use it only
+    // if it is still a reordering of this season's drafters.
+    if (Array.isArray(saved.order) && saved.order.length === baseDrafters.length
+        && baseDrafters.every(d => saved.order.includes(d))) {
+      drafters = saved.order.slice();
+    }
     // Keep only picks whose player still exists in this season's roster.
     const names = new Set(DataStore.season.players.map(p => p.name));
     picks = saved.picks
@@ -86,7 +95,7 @@ const Draft = (function () {
 
   function saveState() {
     try {
-      localStorage.setItem(storageKey(), JSON.stringify({ picks }));
+      localStorage.setItem(storageKey(), JSON.stringify({ picks, order: drafters }));
     } catch (e) { /* storage full or blocked: draft still works in-session */ }
   }
 
@@ -136,6 +145,44 @@ const Draft = (function () {
   function resetDraft() {
     if (!window.confirm('Reset this draft? All picks will be cleared.')) return;
     picks = [];
+    saveState();
+    render();
+  }
+
+  // Move a drafter one slot up (-1) or down (+1). Only allowed before pick 1;
+  // once the draft starts the order is locked (undo back to zero to change it).
+  function moveDrafter(i, dir) {
+    if (picks.length) return;
+    const j = i + dir;
+    if (j < 0 || j >= drafters.length) return;
+    [drafters[i], drafters[j]] = [drafters[j], drafters[i]];
+    saveState();
+    render();
+  }
+
+  // Draft-order game: everyone guesses 1-100, the app draws a number, and the
+  // closest guess picks first. A tie for any slot asks for new guesses.
+  function drawOrder() {
+    if (picks.length) return;
+    const guesses = drafters.map((d, i) => {
+      const el = containerEl.querySelector('#guess-' + i);
+      return { d, g: el ? Number(el.value) : NaN };
+    });
+    if (guesses.some(x => !Number.isInteger(x.g) || x.g < 1 || x.g > 100)) {
+      drawResult = 'Everyone needs a whole-number guess from 1 to 100.';
+      render();
+      return;
+    }
+    const n = 1 + Math.floor(Math.random() * 100);
+    guesses.forEach(x => { x.off = Math.abs(x.g - n); });
+    guesses.sort((a, b) => a.off - b.off);
+    if (guesses.some((x, i) => i > 0 && x.off === guesses[i - 1].off)) {
+      drawResult = `The number was ${n}. That's a tie, so guess again.`;
+      render();
+      return;
+    }
+    drafters = guesses.map(x => x.d);
+    drawResult = `The number was ${n}. ` + guesses.map(x => `${x.d} guessed ${x.g}`).join(', ') + '.';
     saveState();
     render();
   }
@@ -334,6 +381,25 @@ const Draft = (function () {
     html += toggleBarHTML();
     if (pinPrompt) html += pinPromptHTML();
 
+    // Draft order: set before pick 1 (numbers drawn at the table), then locked.
+    if (picks.length === 0) {
+      html += `<div class="order-panel"><div class="avail-label">Draft order</div><div class="order-list">`;
+      drafters.forEach((d, i) => {
+        html += `<div class="order-row ${dc(d)}">
+          <span class="order-num">${i + 1}</span>
+          <span class="order-name">${esc(d)}</span>
+          <button class="btn-undo order-btn" data-move="${i}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(d)} up">&uarr;</button>
+          <button class="btn-undo order-btn" data-move="${i}" data-dir="1" ${i === drafters.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(d)} down">&darr;</button>
+        </div>`;
+      });
+      html += `</div>
+        <div class="draw-row">${drafters.map((d, i) => `<label class="draw-guess ${dc(d)}">${esc(d)} <input id="guess-${i}" class="pin-input" type="number" min="1" max="100" inputmode="numeric" placeholder="1-100"></label>`).join('')}
+          <button class="btn-export" data-act="draw">Draw the number</button>
+        </div>
+        ${drawResult ? `<div class="draw-result">${esc(drawResult)}</div>` : ''}
+        <p class="export-note">Everyone guesses 1 to 100 and the closest picks first, or set the order with the arrows. It locks once the draft starts.</p></div>`;
+    }
+
     // On-the-clock banner (or completion banner).
     if (complete) {
       html += `<div class="done-banner">Draft complete</div>`;
@@ -444,6 +510,9 @@ const Draft = (function () {
     containerEl.querySelectorAll('[data-pick]').forEach(b => {
       b.addEventListener('click', () => makePick(b.dataset.pick));
     });
+    containerEl.querySelectorAll('[data-move]').forEach(b => {
+      b.addEventListener('click', () => moveDrafter(Number(b.dataset.move), Number(b.dataset.dir)));
+    });
     containerEl.querySelectorAll('[data-filter]').forEach(b => {
       b.addEventListener('click', () => setFilter(b.dataset.filter));
     });
@@ -468,6 +537,7 @@ const Draft = (function () {
         else if (act === 'reset') resetDraft();
         else if (act === 'copy') copyExport(b);
         else if (act === 'download') downloadExport();
+        else if (act === 'draw') drawOrder();
         else if (act === 'pin-submit') {
           const inp = containerEl.querySelector('#pin-input');
           submitPin(inp ? inp.value : '');

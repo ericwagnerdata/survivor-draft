@@ -513,3 +513,17 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
   .chip-name { font-size: 10px; }
   .view-btn { font-size: 9px; padding: 7px 6px; letter-spacing: 0.06em; }
 }
+
+/* Draft order (pre-draft only): reorder arrows + closest-to-the-number draw */
+.order-panel { margin-bottom: 20px; }
+.order-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
+.order-row { display: flex; align-items: center; gap: 10px; background: var(--charcoal); border-radius: 6px; padding: 8px 12px; border-left: 3px solid var(--ash); }
+.order-row.eric { border-left-color: var(--eric); } .order-row.kris { border-left-color: var(--kris); } .order-row.kelly { border-left-color: var(--kelly); }
+.order-num { font-weight: 700; width: 18px; }
+.order-name { flex: 1; }
+.order-btn { padding: 4px 10px; }
+.order-btn:disabled { opacity: 0.3; cursor: default; }
+.draw-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.draw-guess { display: flex; align-items: center; gap: 6px; }
+.draw-guess .pin-input { width: 80px; }
+.draw-result { margin-top: 10px; color: var(--gold); }
