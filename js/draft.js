@@ -313,7 +313,7 @@ const Draft = (function () {
 
   function tierBadge(p) {
     if (!p.ericTier) return '';
-    return `<span class="tier-badge ${esc(p.ericTier)}">${esc(p.ericTier)}</span>`;
+    return `<span class="tier-badge ${esc(p.ericTier)}">${esc(p.ericTier === 'Medium' ? 'Mid' : p.ericTier)}</span>`;
   }
 
   // Tribe badge colored from the season's palette (DataStore.tribeColor), applied
@@ -456,7 +456,7 @@ const Draft = (function () {
           const fb = (label, val) =>
             `<button class="filter-btn ${activeFilter === val ? 'active' : ''}" data-filter="${esc(val)}">${esc(label)}</button>`;
           html += `<div class="filter-row">
-            ${fb('All', 'All')}${fb('High', 'High')}${fb('Med', 'Medium')}${fb('Low', 'Low')}
+            ${fb('All', 'All')}${fb('High', 'High')}${fb('Mid', 'Medium')}${fb('Low', 'Low')}
           </div>`;
         }
 
