@@ -322,10 +322,12 @@ const DataStore = {
   ],
   TRIBE_FALLBACK: { base: '#3D3D3D', bg: 'rgba(61,61,61,0.5)', text: '#F0E6D3' },
 
-  // Color for a tribe name in the currently loaded season (index into the palette).
+  // Color for a tribe name in the currently loaded season: the season's own
+  // tribeColors (real buff colors) when set, else an index into the palette.
   tribeColor(tribeName) {
-    const tribes = (this.season && this.season.meta && Array.isArray(this.season.meta.tribes))
-      ? this.season.meta.tribes : [];
+    const meta = this.season && this.season.meta;
+    if (meta && meta.tribeColors && meta.tribeColors[tribeName]) return meta.tribeColors[tribeName];
+    const tribes = (meta && Array.isArray(meta.tribes)) ? meta.tribes : [];
     const i = tribes.indexOf(tribeName);
     if (i < 0) return this.TRIBE_FALLBACK;
     return this.TRIBE_PALETTE[i % this.TRIBE_PALETTE.length];

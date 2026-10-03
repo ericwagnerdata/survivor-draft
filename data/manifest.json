@@ -1,6 +1,33 @@
 {
-  "currentSeason": 50,
+  "currentSeason": 51,
   "seasons": [
+    {
+      "n": 51,
+      "title": "Survivor 51",
+      "drafters": [
+        "Eric",
+        "Kris",
+        "Kelly"
+      ],
+      "tribes": [
+        "Toka",
+        "Savu"
+      ],
+      "status": "active",
+      "picksPerDrafter": 7,
+      "tribeColors": {
+        "Toka": {
+          "base": "#E6B800",
+          "bg": "rgba(230,184,0,0.2)",
+          "text": "#f5d76e"
+        },
+        "Savu": {
+          "base": "#7B4FB8",
+          "bg": "rgba(123,79,184,0.25)",
+          "text": "#c3a6ec"
+        }
+      }
+    },
     {
       "n": 50,
       "title": "Survivor 50",
@@ -14,7 +41,7 @@
         "Cila",
         "Kalo"
       ],
-      "status": "active",
+      "status": "archived",
       "picksPerDrafter": 8
     },
     {

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Survivor 51 Draft Sheet</title>
+<style>
+  @page { size: letter landscape; margin: 0.4in; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 11.5px/1.25 "Segoe UI", Arial, sans-serif; color: #1a1a1a; background: #fff; }
+  header { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 3px solid #1a1a1a; padding-bottom: 4px; margin-bottom: 8px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: .5px; }
+  .sub { font-size: 11px; color: #555; }
+  .legend span { display: inline-block; margin-left: 10px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { white-space: nowrap; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .4px; background: #1a1a1a; color: #fff; padding: 5px 6px; }
+  td { padding: 0 6px; height: 28.5px; border-bottom: 1px solid #bbb; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f4f4f4; }
+  .num { width: 22px; color: #888; text-align: right; }
+  .name b { font-size: 13.5px; white-space: nowrap; }
+  .name small { display: block; color: #666; font-size: 10px; }
+  .age { width: 34px; text-align: center; }
+  .tribe { width: 62px; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 10.5px; }
+  .Toka { background: #f5c518; color: #1a1a1a; }
+  .Savu { background: #6b3fa0; color: #fff; }
+  .info { font-size: 10px; line-height: 1.15; color: #333; }
+
+  .notes { border-left: 1px solid #bbb; }
+  .blank { width: 105px; border-left: 1px solid #bbb; }
+  .pick { width: 46px; border-left: 1px solid #bbb; }
+  footer { margin-top: 8px; display: flex; gap: 24px; font-size: 11px; }
+  footer div { flex: 1; border: 1px solid #1a1a1a; padding: 3px 8px; height: 34px; }
+  footer b { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>SURVIVOR 51 &middot; DRAFT SHEET</h1><div class="sub">Eric &middot; Kelly &middot; Kris &middot; 21 castaways</div></div>
+  <div class="legend"><span class="chip Toka">Toka</span><span class="chip Savu">Savu</span></div>
+</header>
+<table>
+  <colgroup><col style="width:24px"><col style="width:150px"><col style="width:34px"><col style="width:58px"><col style="width:108px"><col style="width:86px"><col style="width:86px"><col><col style="width:88px"><col style="width:52px"></colgroup>
+  <thead><tr><th></th><th>Castaway</th><th>Age</th><th>Tribe</th><th>Occupation</th><th>Hometown</th><th>Lives in</th><th>Notes</th><th>Drafted by</th><th>Pick #</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<footer>
+  <div><b>Eric</b></div><div><b>Kelly</b></div><div><b>Kris</b></div>
+</footer>
+<script>
+const cast = [
+  ["Aaliyah Puglia","Aaliyah",24,"Toka","Chef","Gloucester City, NJ","Providence, RI"],
+  ["Ana Sani","Ana",34,"Savu","Voice actress","Richmond Hill, ON","Toronto, ON"],
+  ["Brady Booker","Brady",27,"Toka","Pro wrestler","La Salle, IL","Knoxville, TN"],
+  ["Patt Cannaday","Patt",33,"Toka","Federal prosecutor","Tampa, FL","Washington, DC"],
+  ["Jenna Doore","Jenna",30,"Toka","Wedding photographer","Perrysburg, OH","Toledo, OH"],
+  ["Lewis Kelly","Lewis",28,"Toka","Farmer","Dublin, Ireland","Corozal, PR"],
+  ["Danny Kilby","Kilby",30,"Toka","Game designer","Mount Forest, ON","London, ON"],
+  ["Angelica Loblack","Jelly",29,"Toka","Sociology professor","Garland, TX","Bloomington, IN"],
+  ["Maggie Nestor","Maggie",40,"Toka","Farmer","Middleway, WV","Charles Town, WV"],
+  ["Thien An Nguyen","Thien An",24,"Toka","Medical student","Fort Worth, TX","Fort Worth, TX"],
+  ["Mike Pinsky","Mike",32,"Toka","Baseball executive","New York, NY","New York, NY"],
+  ["Devin Way","Devin",33,"Toka","Actor (Grey's Anatomy)","Lufkin, TX","Los Angeles, CA"],
+  ["Rob Antonson","Rob",40,"Savu","Airline gate agent","Johnston, RI","Cumberland, RI"],
+  ["Linnea Capobianco","Linnea",25,"Savu","Entrepreneur","Kearny, NJ","Jersey City, NJ"],
+  ["Cristian Chavez","Cristian",26,"Savu","Head of HR","Salt Lake City, UT","Salt Lake City, UT"],
+  ["Sharonda Cox","Sharonda",34,"Savu","OB-GYN resident","Pompano Beach, FL","Richmond, KY"],
+  ["Kristin Flickinger","Kristin",49,"Savu","Crisis management","Ketchum, ID","Santa Barbara, CA"],
+  ["Ori Jean-Charles","Ori",27,"Savu","Personal trainer","Spring Valley, NY","Spring Valley, NY"],
+  ["Carter Krull","Carter",24,"Savu","Livestock farmer","Rock Rapids, IA","Sioux Falls, SD"],
+  ["Alexis Levine","Alexis",34,"Savu","Criminal defense attorney","Atlanta, GA","Atlanta, GA"],
+  ["Eric Macksoud","Eric",34,"Savu","Mental health counselor","Lincoln, RI","Windsor Locks, CT"],
+];
+cast.sort((a, b) => a[0].localeCompare(b[0]));
+document.getElementById("rows").innerHTML = cast.map(([name, nick, age, tribe, job, home, lives], i) => `
+  <tr><td class="num">${i + 1}</td>
+  <td class="name"><b>${name}</b>${!name.startsWith(nick) ? `<small>"${nick}"</small>` : ""}</td>
+  <td class="age">${age}</td><td class="tribe"><span class="chip ${tribe}">${tribe}</span></td>
+  <td class="info occ">${job}</td><td class="info home">${home}</td><td class="info home">${lives}</td><td class="notes"></td><td class="blank"></td><td class="pick"></td></tr>`).join("");
+</script>
+</body>
+</html>
