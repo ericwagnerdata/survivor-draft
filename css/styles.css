@@ -527,3 +527,14 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .draw-guess { display: flex; align-items: center; gap: 6px; }
 .draw-guess .pin-input { width: 80px; }
 .draw-result { margin-top: 10px; color: var(--gold); }
+
+/* Draft tab "Who's left": eliminated picks greyed under an Out label */
+.draft-pick.out { opacity: 0.45; filter: grayscale(1); }
+.out-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px; }
+.draft-col-header .team-count { font-size: 9px; opacity: 0.7; margin-left: 6px; }
+@media (max-width: 480px) {
+  /* "Who's left" stacks the teams so names and "Out ep" labels both fit. */
+  .draft-board.left { grid-template-columns: 1fr; gap: 10px; }
+  .draft-board.left .draft-pick { flex-wrap: nowrap; }
+  .draft-board.left .draft-pick-name { font-size: 12px; }
+}

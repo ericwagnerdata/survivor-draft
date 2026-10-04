@@ -75,6 +75,8 @@ function photoCard(p) {
 
 /* ---- Views ---- */
 
+let draftTabMode = 'board'; // drafted seasons: 'board' (pick order) or 'left' (who's still in)
+
 function renderDraft() {
   // Undrafted seasons run the interactive snake draft engine (js/draft.js).
   // Drafted seasons (S50) fall through to the locked read-only recap below.
@@ -83,28 +85,59 @@ function renderDraft() {
     return;
   }
 
-  const columns = DRAFTERS.map(d => {
-    const dc = d.toLowerCase();
-    const picks = DataStore.playersByDrafter(d).map(p => `
-      <div class="draft-pick">
+  // Drafted seasons: toggle between the draft board (pick order) and "Who's left"
+  // (each team split into still-in / out). Eliminations come from
+  // DataStore.eliminationInfo, so this respects the shared spoiler cutoff.
+  const pickRow = (p, out) => `
+      <div class="draft-pick${out ? ' out' : ''}">
         <div class="draft-pick-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
         <div class="draft-pick-info">
           <div class="draft-pick-name">${esc(p.name)}</div>
           ${tribeBadge(p.tribe, 'tribe-badge')}
         </div>
-        <div class="draft-pick-num">#${esc(p.pick)}</div>
-      </div>`).join('');
+        <div class="draft-pick-num">${out ? 'Out ep ' + esc(out) : '#' + esc(p.pick)}</div>
+      </div>`;
+
+  const columns = DRAFTERS.map(d => {
+    const dc = d.toLowerCase();
+    const team = DataStore.playersByDrafter(d);
+    let header = esc(d);
+    let picks;
+    if (draftTabMode === 'left') {
+      const alive = team.filter(p => !DataStore.eliminationInfo(p.name).eliminated);
+      const out = team
+        .map(p => ({ p, ep: DataStore.eliminationInfo(p.name).episode }))
+        .filter(x => x.ep !== null)
+        .sort((x, y) => y.ep - x.ep);
+      header += ` <span class="team-count">${alive.length} of ${team.length} left</span>`;
+      picks = alive.map(p => pickRow(p)).join('')
+        + (out.length ? `<div class="out-label">Out</div>` + out.map(x => pickRow(x.p, x.ep)).join('') : '');
+    } else {
+      picks = team.map(p => pickRow(p)).join('');
+    }
     return `
       <div class="draft-col">
-        <div class="draft-col-header ${dc}">${esc(d)}</div>
+        <div class="draft-col-header ${dc}">${header}</div>
         <div class="draft-col-picks">${picks}</div>
       </div>`;
   }).join('');
 
+  const rounds = Number(DataStore.season.meta.picksPerDrafter) || 0;
+  const summary = draftTabMode === 'left'
+    ? (DataStore.hasAired() ? 'Who is still in the game on each team, through the latest episode you have watched.' : 'Everyone is still in. Nothing has been logged yet.')
+    : `Snake draft, ${rounds} rounds per drafter, in pick order.`;
+
   view.innerHTML = `
     <div class="section-label">Draft Board</div>
-    <p class="summary">Snake draft, 8 rounds per drafter, in pick order.</p>
-    <div class="draft-board">${columns}</div>`;
+    <div class="view-toggle">
+      <button class="view-btn ${draftTabMode === 'board' ? 'active' : ''}" data-draft-mode="board">Draft board</button>
+      <button class="view-btn ${draftTabMode === 'left' ? 'active' : ''}" data-draft-mode="left">Who's left</button>
+    </div>
+    <p class="summary">${summary}</p>
+    <div class="draft-board${draftTabMode === 'left' ? ' left' : ''}">${columns}</div>`;
+  view.querySelectorAll('[data-draft-mode]').forEach(btn => {
+    btn.addEventListener('click', () => { draftTabMode = btn.dataset.draftMode; renderDraft(); });
+  });
 }
 
 function renderStandings() {
