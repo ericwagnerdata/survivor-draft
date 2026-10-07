@@ -661,7 +661,16 @@ function renderEventEntry(formEp, activePlayers, episodes) {
       if (ev.oncePerEpisode) flags.push('once per episode');
       if (ev.oncePerSeason) flags.push('once per season');
       const flagNote = flags.length ? `<span class="event-flag">${flags.join(', ')}</span>` : '';
-      const chips = activePlayers.map(p => chip(ev, p)).join('');
+      // perVote: pick the castaway and enter how many votes they got (two rows
+      // cover a double boot). Others: one tap-to-toggle chip per castaway.
+      const voteRow = (nm, n) => `<div class="vote-row" data-pervote="${esc(ev.id)}">
+          <select class="pin-input vote-name"><option value="">None</option>${activePlayers.map(p => `<option${p.name === nm ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+          <input class="pin-input vote-count" type="number" min="0" inputmode="numeric" placeholder="votes" value="${n === undefined ? '' : esc(n)}">
+        </div>`;
+      const counts = (ev.perVote && selected[ev.id] && !Array.isArray(selected[ev.id])) ? Object.entries(selected[ev.id]) : [];
+      const chips = ev.perVote
+        ? [0, 1].map(i => voteRow(counts[i] ? counts[i][0] : '', counts[i] ? counts[i][1] : undefined)).join('')
+        : activePlayers.map(p => chip(ev, p)).join('');
       return `
         <div class="event-row" data-event-row="${esc(ev.id)}">
           <div class="event-head">
@@ -707,6 +716,11 @@ function collectEpisodeFromForm(activePlayers, episodes) {
     view.querySelectorAll('.event-chip[data-event].on').forEach(btn => {
       const id = btn.dataset.event;
       (events[id] = events[id] || []).push(btn.dataset.name);
+    });
+    view.querySelectorAll('.vote-row[data-pervote]').forEach(row => {
+      const nm = row.querySelector('.vote-name').value;
+      const n = Number(row.querySelector('.vote-count').value);
+      if (nm && n > 0) (events[row.dataset.pervote] = events[row.dataset.pervote] || {})[nm] = n;
     });
     const eliminated = [];
     view.querySelectorAll('.event-chip[data-elim-chip].on').forEach(btn => {

@@ -159,6 +159,13 @@
       "group": "Social"
     },
     {
+      "id": "votes_against",
+      "label": "Voted out: 1 pt per vote against",
+      "points": 1,
+      "group": "Tribal",
+      "perVote": true
+    },
+    {
       "id": "winner",
       "label": "Sole Survivor (won the season)",
       "points": 13,

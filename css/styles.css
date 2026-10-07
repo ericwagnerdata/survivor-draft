@@ -538,3 +538,7 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
   .draft-board.left .draft-pick { flex-wrap: nowrap; }
   .draft-board.left .draft-pick-name { font-size: 12px; }
 }
+
+.vote-row { display: flex; gap: 8px; margin: 4px 0; }
+.vote-row .vote-name { flex: 1; }
+.vote-row .vote-count { width: 80px; }

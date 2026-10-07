@@ -70,6 +70,10 @@ const DataStore = {
       if (typeof pts !== 'number') return;
       const names = eventsMap[eventId];
       if (Array.isArray(names)) names.forEach(nm => add(nm, pts));
+      // perVote events (e.g. votes against the boot) store { name: count }.
+      else if (names && typeof names === 'object') {
+        Object.keys(names).forEach(nm => add(nm, pts * (Number(names[nm]) || 0)));
+      }
     });
     // Auto out-of-game bonus: anyone eliminated in a prior episode earns it here.
     const bonus = this.outOfGamePerEpisode();
