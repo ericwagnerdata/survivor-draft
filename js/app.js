@@ -76,6 +76,9 @@ function photoCard(p) {
 /* ---- Views ---- */
 
 let draftTabMode = 'board'; // drafted seasons: 'board' (pick order) or 'left' (who's still in)
+// Watch mode ends when you leave the page or the browser exits full screen.
+window.addEventListener('hashchange', () => document.body.classList.remove('watch'));
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) document.body.classList.remove('watch'); });
 
 function renderDraft() {
   // Undrafted seasons run the interactive snake draft engine (js/draft.js).
@@ -98,6 +101,21 @@ function renderDraft() {
         <div class="draft-pick-num">${out ? 'Out ep ' + esc(out) : '#' + esc(p.pick)}</div>
       </div>`;
 
+  // Who's left card: first name (or nickname) on one line, surname under it.
+  const leftCard = (p, out) => {
+    const nick = p.name.match(/"(.+)"/);
+    const parts = p.name.replace(/"[^"]*"s*/, '').split(' ');
+    // Surname is the last word, so two-word first names (Thien An) stay together.
+    const first = nick ? nick[1] : parts.slice(0, -1).join(' ');
+    const last = parts[parts.length - 1];
+    return `
+      <div class="left-card${out ? ' out' : ''}">
+        <div class="left-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
+        <div class="left-name"><span class="left-first">${esc(first)}</span><span class="left-last">${esc(last)}</span></div>
+        ${out ? `<span class="left-out">Out ep ${esc(out)}</span>` : tribeBadge(p.tribe, 'tribe-badge')}
+      </div>`;
+  };
+
   const columns = DRAFTERS.map(d => {
     const dc = d.toLowerCase();
     const team = DataStore.playersByDrafter(d);
@@ -110,8 +128,7 @@ function renderDraft() {
         .filter(x => x.ep !== null)
         .sort((x, y) => y.ep - x.ep);
       header += ` <span class="team-count">${alive.length} of ${team.length} left</span>`;
-      picks = alive.map(p => pickRow(p)).join('')
-        + (out.length ? `<div class="out-label">Out</div>` + out.map(x => pickRow(x.p, x.ep)).join('') : '');
+      picks = alive.map(p => leftCard(p)).join('') + out.map(x => leftCard(x.p, x.ep)).join('');
     } else {
       picks = team.map(p => pickRow(p)).join('');
     }
@@ -133,10 +150,24 @@ function renderDraft() {
       <button class="view-btn ${draftTabMode === 'board' ? 'active' : ''}" data-draft-mode="board">Draft board</button>
       <button class="view-btn ${draftTabMode === 'left' ? 'active' : ''}" data-draft-mode="left">Who's left</button>
     </div>
+    ${draftTabMode === 'left' ? `<button class="btn-export watch-btn" data-watch="on">Full screen</button>` : ''}
+    <button class="watch-exit" data-watch="off" aria-label="Exit full screen">&times;</button>
     <p class="summary">${summary}</p>
     <div class="draft-board${draftTabMode === 'left' ? ' left' : ''}">${columns}</div>`;
   view.querySelectorAll('[data-draft-mode]').forEach(btn => {
     btn.addEventListener('click', () => { draftTabMode = btn.dataset.draftMode; renderDraft(); });
+  });
+  // Full screen "watch mode": hide the header/tabs so the three teams fill the
+  // phone while watching. Uses the browser Fullscreen API when available.
+  view.querySelectorAll('[data-watch]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const on = btn.dataset.watch === 'on';
+      document.body.classList.toggle('watch', on);
+      try {
+        if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+        if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      } catch (e) { /* fullscreen not supported: the body class still hides the chrome */ }
+    });
   });
 }
 

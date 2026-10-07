@@ -528,17 +528,47 @@ h1 { font-family: 'Cinzel Decorative', serif; font-size: clamp(16px, 5vw, 26px);
 .draw-guess .pin-input { width: 80px; }
 .draw-result { margin-top: 10px; color: var(--gold); }
 
-/* Draft tab "Who's left": eliminated picks greyed under an Out label */
-.draft-pick.out { opacity: 0.45; filter: grayscale(1); }
-.out-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px; }
 .draft-col-header .team-count { font-size: 9px; opacity: 0.7; margin-left: 6px; }
-@media (max-width: 480px) {
-  /* "Who's left" stacks the teams so names and "Out ep" labels both fit. */
-  .draft-board.left { grid-template-columns: 1fr; gap: 10px; }
-  .draft-board.left .draft-pick { flex-wrap: nowrap; }
-  .draft-board.left .draft-pick-name { font-size: 12px; }
-}
 
 .vote-row { display: flex; gap: 8px; margin: 4px 0; }
 .vote-row .vote-name { flex: 1; }
 .vote-row .vote-count { width: 80px; }
+
+/* Who's left: a card per castaway, three columns, photo on top. Out castaways
+   stay in their column, greyed with the episode they went out. */
+.draft-board.left .draft-col { display: flex; flex-direction: column; }
+.draft-board.left .draft-col-picks { display: flex; flex-direction: column; gap: 6px; padding: 6px; flex: 1; }
+.left-card { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; background: var(--smoke); border-radius: 6px; padding: 8px 4px; min-height: 120px; }
+.left-photo { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.left-photo img { width: 100%; height: 100%; object-fit: cover; }
+.left-name { display: flex; flex-direction: column; line-height: 1.15; }
+.left-first { font-size: 14px; color: var(--light); }
+.left-last { font-size: 10px; opacity: 0.7; }
+.left-card.out { opacity: 0.4; filter: grayscale(1); }
+.left-out { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+.draft-col-header .team-count { font-size: 9px; opacity: 0.7; margin-left: 6px; }
+.watch-btn { margin-bottom: 12px; }
+.watch-exit { display: none; }
+
+/* Watch mode: only the three teams, filling the screen. */
+body.watch header, body.watch #tabs, body.watch footer, body.watch .section-label,
+body.watch .view-toggle, body.watch .summary, body.watch .watch-btn { display: none !important; }
+body.watch main, body.watch #view { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+/* Seven equal rows per column that always fit the screen height; the photo
+   shrinks with the row so nothing is cut off on shorter phones. */
+body.watch .draft-board.left { height: 100dvh; gap: 4px; padding: 4px; overflow: hidden; }
+body.watch .draft-board.left .draft-col { min-height: 0; }
+body.watch .draft-board.left .draft-col-header { padding: 6px 2px; }
+body.watch .draft-board.left .draft-col-picks { display: grid; grid-template-rows: repeat(7, minmax(0, 1fr)); gap: 3px; padding: 3px; min-height: 0; }
+body.watch .left-card { min-height: 0; padding: 3px 2px; gap: 2px; overflow: hidden; }
+body.watch .left-photo { width: clamp(36px, calc((100dvh - 60px) / 7 - 48px), 80px); height: clamp(36px, calc((100dvh - 60px) / 7 - 48px), 80px); }
+body.watch .left-first { font-size: 12px; } body.watch .left-last { font-size: 9px; }
+body.watch .left-card .tribe-badge, body.watch .left-out { font-size: 8px; padding: 0 4px; }
+body.watch .watch-exit { display: block; position: fixed; bottom: 10px; right: 10px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--ash); background: rgba(0,0,0,0.6); color: var(--light); font-size: 18px; line-height: 1; }
+
+@media (max-width: 480px) {
+  .draft-board.left { gap: 4px; }
+  .left-card { min-height: 104px; }
+  .left-photo { width: 60px; height: 60px; }
+  .left-first { font-size: 12px; }
+}
