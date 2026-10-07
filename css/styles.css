@@ -556,19 +556,33 @@ body.watch .view-toggle, body.watch .summary, body.watch .watch-btn { display: n
 body.watch main, body.watch #view { padding: 0 !important; margin: 0 !important; max-width: none !important; }
 /* Seven equal rows per column that always fit the screen height; the photo
    shrinks with the row so nothing is cut off on shorter phones. */
+@media (max-width: 480px) {
+  .draft-board.left { height: 100dvh; gap: 4px; padding: 0; overflow: hidden; }
+  .draft-board.left .draft-col { min-height: 0; }
+  .draft-board.left .draft-col-header { padding: 6px 2px; }
+  .draft-board.left .draft-col-picks { display: grid; grid-template-rows: repeat(var(--rows, 7), minmax(0, 1fr)); gap: 3px; padding: 3px; min-height: 0; }
+  .draft-board.left .left-card { min-height: 0; padding: 3px 2px; gap: 2px; overflow: hidden; }
+  .draft-board.left .left-photo { width: clamp(36px, calc((100dvh - 60px) / var(--rows, 7) - 48px), 80px); height: clamp(36px, calc((100dvh - 60px) / var(--rows, 7) - 48px), 80px); }
+  .draft-board.left .left-first { font-size: 12px; } .draft-board.left .left-last { font-size: 9px; }
+  .draft-board.left .left-card .tribe-badge, .draft-board.left .left-out { font-size: 8px; padding: 0 4px; }
+}
 body.watch .draft-board.left { height: 100dvh; gap: 4px; padding: 4px; overflow: hidden; }
 body.watch .draft-board.left .draft-col { min-height: 0; }
 body.watch .draft-board.left .draft-col-header { padding: 6px 2px; }
-body.watch .draft-board.left .draft-col-picks { display: grid; grid-template-rows: repeat(7, minmax(0, 1fr)); gap: 3px; padding: 3px; min-height: 0; }
+body.watch .draft-board.left .draft-col-picks { display: grid; grid-template-rows: repeat(var(--rows, 7), minmax(0, 1fr)); gap: 3px; padding: 3px; min-height: 0; }
 body.watch .left-card { min-height: 0; padding: 3px 2px; gap: 2px; overflow: hidden; }
-body.watch .left-photo { width: clamp(36px, calc((100dvh - 60px) / 7 - 48px), 80px); height: clamp(36px, calc((100dvh - 60px) / 7 - 48px), 80px); }
+body.watch .left-photo { width: clamp(36px, calc((100dvh - 60px) / var(--rows, 7) - 48px), 80px); height: clamp(36px, calc((100dvh - 60px) / var(--rows, 7) - 48px), 80px); }
 body.watch .left-first { font-size: 12px; } body.watch .left-last { font-size: 9px; }
 body.watch .left-card .tribe-badge, body.watch .left-out { font-size: 8px; padding: 0 4px; }
 body.watch .watch-exit { display: block; position: fixed; bottom: 10px; right: 10px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--ash); background: rgba(0,0,0,0.6); color: var(--light); font-size: 18px; line-height: 1; }
 
-@media (max-width: 480px) {
-  .draft-board.left { gap: 4px; }
-  .left-card { min-height: 104px; }
-  .left-photo { width: 60px; height: 60px; }
-  .left-first { font-size: 12px; }
-}
+
+/* Stats: episode breakdown (validation view) */
+.bd-table { table-layout: fixed; width: 100%; }
+.bd-table th.stats-rowhead { white-space: normal; width: 38%; }
+.bd-table td.bd-who { text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
+.bd-totals td:first-child, .bd-totals th:first-child { text-align: left; }
+.bd-team th { padding-top: 10px; }
+.bd-team.eric th { color: var(--eric); } .bd-team.kris th { color: var(--kris); } .bd-team.kelly th { color: var(--kelly); }
+.bd-off td { color: var(--ember); }
+.watch-btn { width: 100%; padding: 10px; font-size: 12px; }

@@ -150,10 +150,10 @@ function renderDraft() {
       <button class="view-btn ${draftTabMode === 'board' ? 'active' : ''}" data-draft-mode="board">Draft board</button>
       <button class="view-btn ${draftTabMode === 'left' ? 'active' : ''}" data-draft-mode="left">Who's left</button>
     </div>
-    ${draftTabMode === 'left' ? `<button class="btn-export watch-btn" data-watch="on">Full screen</button>` : ''}
+    ${draftTabMode === 'left' ? `<button class="btn-export watch-btn" data-watch="on">&#x26F6; Full screen for watching</button>` : ''}
     <button class="watch-exit" data-watch="off" aria-label="Exit full screen">&times;</button>
     <p class="summary">${summary}</p>
-    <div class="draft-board${draftTabMode === 'left' ? ' left' : ''}">${columns}</div>`;
+    <div class="draft-board${draftTabMode === 'left' ? ' left' : ''}" style="--rows:${rounds || 7}">${columns}</div>`;
   view.querySelectorAll('[data-draft-mode]').forEach(btn => {
     btn.addEventListener('click', () => { draftTabMode = btn.dataset.draftMode; renderDraft(); });
   });
@@ -329,6 +329,61 @@ function statsTable(stats, mode, colorOf) {
     </div>`;
 }
 
+// Episode breakdown (for checking against the source site): every scoring event
+// that episode with its points and who earned it, the auto out-of-game points,
+// then each castaway's total by team. A castaway whose events do not add up to
+// their recorded score is flagged, so data-entry mistakes stand out.
+function episodeBreakdown(epNum) {
+  const eps = DataStore.visibleEpisodes().slice().sort((a, b) => a.episode - b.episode);
+  const ep = eps.find(e => e.episode === epNum);
+  if (!ep) return '';
+  const scoring = DataStore.season.scoring;
+  const events = ep.events && typeof ep.events === 'object' ? ep.events : null;
+  const prior = priorEliminatedSet(eps, epNum);
+  const bonus = DataStore.outOfGamePerEpisode();
+
+  let eventRows = '';
+  if (events && scoring && Array.isArray(scoring.events)) {
+    scoring.events.forEach(ev => {
+      const v = events[ev.id];
+      if (!v) return;
+      const who = Array.isArray(v)
+        ? v.map(esc).join(', ')
+        : Object.keys(v).map(nm => `${esc(nm)} (${esc(v[nm])} vote${Number(v[nm]) === 1 ? '' : 's'})`).join(', ');
+      if (!who) return;
+      eventRows += `<tr><th class="stats-rowhead">${esc(ev.label)} <span class="event-pts">${esc(ev.points)}${ev.perVote ? ' per vote' : ''}</span></th><td class="bd-who">${who}</td></tr>`;
+    });
+    if (bonus && prior.size) {
+      eventRows += `<tr><th class="stats-rowhead">Out of the game <span class="event-pts">${esc(bonus)}</span></th><td class="bd-who">${[...prior].map(esc).join(', ')}</td></tr>`;
+    }
+  }
+  const eventsTable = events
+    ? `<div class="stats-table-wrap"><table class="stats-table bd-table"><tbody>${eventRows || '<tr><td>No scoring events logged.</td></tr>'}</tbody></table></div>`
+    : `<p class="summary">Only point totals were recorded for this episode, not the individual events.</p>`;
+
+  // Per-castaway totals grouped by team, with a check against the events.
+  const computed = events ? DataStore.computeScoresFromEvents(events, prior) : null;
+  const elim = new Set(Array.isArray(ep.eliminated) ? ep.eliminated : []);
+  const teamRows = DRAFTERS.map(d => {
+    const team = DataStore.playersByDrafter(d)
+      .map(p => ({ p, pts: Number(ep.scores && ep.scores[p.name]) || 0 }))
+      .sort((a, b) => b.pts - a.pts);
+    const sum = team.reduce((a, x) => a + x.pts, 0);
+    const rows = team.map(({ p, pts }) => {
+      const off = computed && (computed[p.name] || 0) !== pts;
+      const tag = elim.has(p.name) ? ' <span class="event-pts">voted out</span>' : (prior.has(p.name) ? ' <span class="event-pts">out</span>' : '');
+      return `<tr${off ? ' class="bd-off" title="Events add up to ' + (computed[p.name] || 0) + '"' : ''}><td>${esc(p.name)}${tag}${off ? ' &#9888;' : ''}</td><td>${pts}</td></tr>`;
+    }).join('');
+    return `<tr class="bd-team ${d.toLowerCase()}"><th>${esc(d)}</th><th>${sum}</th></tr>${rows}`;
+  }).join('');
+
+  return `
+    <div class="avail-label" style="margin-top:22px">Episode breakdown</div>
+    <div class="filter-row">${eps.map(e => `<button class="filter-btn${e.episode === epNum ? ' active' : ''}" data-bd-ep="${e.episode}">Ep ${e.episode}</button>`).join('')}</div>
+    ${eventsTable}
+    <div class="stats-table-wrap"><table class="stats-table bd-totals"><thead><tr><th>Castaway</th><th>Points</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
+}
+
 function renderStats() {
   const n = DataStore.season.meta.n;
 
@@ -350,6 +405,9 @@ function renderStats() {
 
   const { data, colorOf } = statsForGroup(statsState.group);
   const table = statsTable(data, statsState.mode, colorOf);
+  // Breakdown defaults to the latest visible episode.
+  const visibleNums = DataStore.visibleEpisodes().map(e => e.episode);
+  const bdEp = visibleNums.includes(statsState.ep) ? statsState.ep : Math.max(...visibleNums);
 
   view.innerHTML = `
     <div class="section-label">Stats</div>
@@ -363,7 +421,8 @@ function renderStats() {
       <div class="filter-row">${modeBtns}</div>
     </div>
     <div class="chart-wrap"><canvas id="stats-chart"></canvas></div>
-    ${table}`;
+    ${table}
+    ${episodeBreakdown(bdEp)}`;
 
   const canvas = view.querySelector('#stats-chart');
   if (canvas) {
@@ -379,6 +438,9 @@ function renderStats() {
   });
   view.querySelectorAll('[data-stats-mode]').forEach(b => {
     b.addEventListener('click', () => { statsState.mode = b.dataset.statsMode; renderStats(); });
+  });
+  view.querySelectorAll('[data-bd-ep]').forEach(b => {
+    b.addEventListener('click', () => { statsState.ep = Number(b.dataset.bdEp); renderStats(); });
   });
 }
 
