@@ -157,6 +157,13 @@
       "label": "Gain love from home",
       "points": 1,
       "group": "Social"
+    },
+    {
+      "id": "winner",
+      "label": "Sole Survivor (won the season)",
+      "points": 13,
+      "group": "Finale",
+      "oncePerSeason": true
     }
   ]
 }
