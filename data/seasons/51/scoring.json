@@ -27,6 +27,12 @@
       "group": "Challenges"
     },
     {
+      "id": "island_challenge",
+      "label": "Island Challenge (participated)",
+      "points": 1,
+      "group": "Challenges"
+    },
+    {
       "id": "marooning",
       "label": "Marooning Challenge win",
       "points": 1,
@@ -53,7 +59,7 @@
     {
       "id": "tree_mail",
       "label": "Read Tree Mail",
-      "points": 2,
+      "points": 1,
       "group": "Gameplay",
       "oncePerEpisode": true
     },
@@ -67,7 +73,7 @@
     {
       "id": "make_fire",
       "label": "Make Fire at Camp",
-      "points": 2,
+      "points": 1,
       "group": "Gameplay",
       "oncePerEpisode": true
     },
@@ -105,6 +111,12 @@
       "group": "Gameplay"
     },
     {
+      "id": "negotiate",
+      "label": "Negotiate for Supplies",
+      "points": 1,
+      "group": "Gameplay"
+    },
+    {
       "id": "find_clue",
       "label": "Find Idol or Advantage clue",
       "points": 1,
@@ -131,12 +143,12 @@
     {
       "id": "shot_in_dark",
       "label": "Play Shot in the Dark",
-      "points": 2,
+      "points": 1,
       "group": "Idols/Advantages"
     },
     {
       "id": "gold_coin",
-      "label": "Flip Mr. Beast Gold Coin",
+      "label": "Flip the Prize Coin",
       "points": 2,
       "group": "Idols/Advantages"
     },
