@@ -167,8 +167,25 @@ const DataStore = {
   // shared cutoff. EVERY consumer (standings, scores, eliminations, charts,
   // log, stats) reads this so nothing beyond the cutoff renders anywhere.
   visibleEpisodes() {
-    const cutoff = this.currentEpisode();
+    const cutoff = this.viewCutoff();
     return this.effectiveEpisodes().filter(ep => ep.episode <= cutoff);
+  },
+
+  // A viewer can look back to an earlier episode (e.g. to share scores with
+  // someone who is behind) without changing the shared cutoff. Kept in this
+  // browser tab only, so the next visit starts at the latest episode again.
+  viewKey() { return 'sdp.view.' + this.season.meta.n; },
+  viewCutoff() {
+    const shared = this.currentEpisode();
+    let mine = NaN;
+    try { mine = Number(sessionStorage.getItem(this.viewKey())); } catch (e) { /* storage blocked */ }
+    return Number.isInteger(mine) && mine > 0 && mine < shared ? mine : shared;
+  },
+  setViewCutoff(n) {
+    try {
+      if (n >= this.currentEpisode()) sessionStorage.removeItem(this.viewKey());
+      else sessionStorage.setItem(this.viewKey(), String(n));
+    } catch (e) { /* storage blocked: stays at the latest episode */ }
   },
 
   // True once the season has at least one VISIBLE (gated) episode.

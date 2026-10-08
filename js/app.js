@@ -40,10 +40,25 @@ function tribeBadge(tribe, cls) {
 
 // Small visible reveal indicator so viewers know where the spoiler gate stops.
 // Only shown once a season has visible episodes.
+// "Showing through episode N" picker. Defaults to the latest revealed episode;
+// picking an earlier one rewinds every view in this browser tab only.
 function revealIndicator() {
-  if (!DataStore.hasAired()) return '';
-  return `<div class="reveal-note">Showing through episode ${esc(DataStore.currentEpisode())}</div>`;
+  const latest = DataStore.currentEpisode();
+  if (!latest) return '';
+  const cur = DataStore.viewCutoff();
+  const opts = [];
+  for (let i = latest; i >= 1; i--) {
+    opts.push(`<option value="${i}"${i === cur ? ' selected' : ''}>episode ${i}${i === latest ? ' (latest)' : ''}</option>`);
+  }
+  return `<label class="reveal-note">Showing through <select class="reveal-select" data-view-cutoff>${opts.join('')}</select></label>`;
 }
+
+// One delegated listener for the picker, wherever a view renders it.
+document.addEventListener('change', e => {
+  if (!e.target.matches('[data-view-cutoff]')) return;
+  DataStore.setViewCutoff(Number(e.target.value));
+  route();
+});
 
 function photoCard(p) {
   // Undrafted seasons (e.g. the demo) have drafter:null, so guard the class
@@ -152,6 +167,7 @@ function renderDraft() {
     </div>
     ${draftTabMode === 'left' ? `<button class="btn-export watch-btn" data-watch="on">&#x26F6; Full screen for watching</button>` : ''}
     <button class="watch-exit" data-watch="off" aria-label="Exit full screen">&times;</button>
+    ${draftTabMode === 'left' ? revealIndicator() : ''}
     <p class="summary">${summary}</p>
     <div class="draft-board${draftTabMode === 'left' ? ' left' : ''}" style="--rows:${rounds || 7}">${columns}</div>`;
   view.querySelectorAll('[data-draft-mode]').forEach(btn => {
