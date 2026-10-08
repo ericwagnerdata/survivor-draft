@@ -60,6 +60,36 @@ document.addEventListener('change', e => {
   route();
 });
 
+// Crowd Sole Survivor pick % (fantasysurvivorgame.com), when we have it.
+function solePickTag(p) {
+  const v = DataStore.solePickPct(p.name);
+  return v === null ? '' : `<span class="sole-pct" title="Sole Survivor pick %">${v.toFixed(1)}%</span>`;
+}
+function solePickLine(p) {
+  const v = DataStore.solePickPct(p.name);
+  return v === null ? '' : `<div class="card-sole">Sole pick ${v.toFixed(2)}%</div>`;
+}
+
+// Stats: every castaway ranked by crowd sole-pick %, with a bar and their team.
+function solePickSection() {
+  const snap = DataStore.solePick();
+  if (!snap) return '';
+  const rows = DataStore.season.players
+    .map(p => ({ p, v: DataStore.solePickPct(p.name), out: DataStore.eliminationInfo(p.name).eliminated }))
+    .sort((a, b) => (b.v === null ? -1 : b.v) - (a.v === null ? -1 : a.v));
+  const max = Math.max(...rows.map(r => r.v || 0), 1);
+  const body = rows.map(({ p, v, out }) => `
+    <tr${out ? ' class="sole-out"' : ''}>
+      <td>${esc(p.name)}${out ? ' <span class="event-pts">out</span>' : ''}</td>
+      <td class="sole-team ${(p.drafter || '').toLowerCase()}">${esc(p.drafter || '')}</td>
+      <td class="sole-bar-cell">${v === null ? '<span class="event-pts">not yet</span>' : `<span class="sole-bar" style="width:${(v / max * 100).toFixed(1)}%"></span><span class="sole-val">${v.toFixed(2)}%</span>`}</td>
+    </tr>`).join('');
+  return `
+    <div class="avail-label" style="margin-top:22px">Sole Survivor picks</div>
+    <p class="summary">Share of fantasysurvivorgame.com players picking each castaway to win, as of ${esc(snap.date)} (after episode ${esc(snap.afterEpisode)}).</p>
+    <div class="stats-table-wrap"><table class="stats-table sole-table"><thead><tr><th>Castaway</th><th>Team</th><th>Pick %</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
 function photoCard(p) {
   // Undrafted seasons (e.g. the demo) have drafter:null, so guard the class
   // and only show the drafter badge once a player has been drafted.
@@ -80,6 +110,7 @@ function photoCard(p) {
       <div class="card-meta">Age ${esc(p.age)}</div>
       <div class="card-occupation">${esc(p.occupation)}</div>
       <div class="card-seasons">${esc(p.seasons)}</div>
+      ${solePickLine(p)}
       <div class="badge-row">
         ${tribeBadge(p.tribe, 'tribe-badge')}
         ${drafterBadge}
@@ -127,7 +158,7 @@ function renderDraft() {
       <div class="left-card${out ? ' out' : ''}">
         <div class="left-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
         <div class="left-name"><span class="left-first">${esc(first)}</span><span class="left-last">${esc(last)}</span></div>
-        ${out ? `<span class="left-out">Out ep ${esc(out)}</span>` : tribeBadge(p.tribe, 'tribe-badge')}
+        ${out ? `<span class="left-out">Out ep ${esc(out)}</span>` : `<span class="left-meta">${tribeBadge(p.tribe, 'tribe-badge')}${solePickTag(p)}</span>`}
       </div>`;
   };
 
@@ -438,6 +469,7 @@ function renderStats() {
     </div>
     <div class="chart-wrap"><canvas id="stats-chart"></canvas></div>
     ${table}
+    ${solePickSection()}
     ${episodeBreakdown(bdEp)}`;
 
   const canvas = view.querySelector('#stats-chart');
@@ -529,6 +561,7 @@ function renderTeam(drafter) {
       <div class="card-meta">Age ${esc(p.age)}</div>
       <div class="card-occupation">${esc(p.occupation)}</div>
       <div class="card-seasons">${esc(p.seasons)}</div>
+      ${solePickLine(p)}
       <div class="badge-row">${tribeBadge(p.tribe, 'tribe-badge')}</div>
       ${elim.eliminated ? `<div class="elim-tag">Out, episode ${esc(elim.episode)}</div>` : ''}
       <div class="pick-num">Pick ${esc(p.pick)}</div>

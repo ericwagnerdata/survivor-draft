@@ -21,7 +21,7 @@ const DataStore = {
     if (!meta) throw new Error('Season ' + n + ' not in manifest');
 
     const base = 'data/seasons/' + meta.n + '/';
-    const [players, results, scoring] = await Promise.all([
+    const [players, results, scoring, solepick] = await Promise.all([
       fetch(base + 'players.json').then(r => {
         if (!r.ok) throw new Error('Could not load players.json for season ' + meta.n);
         return r.json();
@@ -32,10 +32,12 @@ const DataStore = {
       }),
       // scoring.json is optional: a season without it falls back to the legacy
       // raw-number entry form, so a missing file must not break the load.
-      fetch(base + 'scoring.json').then(r => (r.ok ? r.json() : null)).catch(() => null)
+      fetch(base + 'scoring.json').then(r => (r.ok ? r.json() : null)).catch(() => null),
+      // solepick.json is optional: crowd Sole Survivor pick % snapshots.
+      fetch(base + 'solepick.json').then(r => (r.ok ? r.json() : null)).catch(() => null)
     ]);
 
-    this.season = { meta, players, results, scoring };
+    this.season = { meta, players, results, scoring, solepick };
     return this.season;
   },
 
@@ -174,6 +176,20 @@ const DataStore = {
   // A viewer can look back to an earlier episode (e.g. to share scores with
   // someone who is behind) without changing the shared cutoff. Kept in this
   // browser tab only, so the next visit starts at the latest episode again.
+  // Latest crowd sole-pick snapshot taken at or before the viewer's episode,
+  // so a rewound view never shows later numbers. null when there is none.
+  solePick() {
+    const snaps = (this.season && this.season.solepick && this.season.solepick.snapshots) || [];
+    const cutoff = this.viewCutoff();
+    const ok = snaps.filter(s => (s.afterEpisode || 0) <= cutoff);
+    return ok.length ? ok.sort((a, b) => (a.afterEpisode || 0) - (b.afterEpisode || 0))[ok.length - 1] : null;
+  },
+  solePickPct(name) {
+    const snap = this.solePick();
+    const v = snap && snap.pct ? snap.pct[name] : undefined;
+    return typeof v === 'number' ? v : null;
+  },
+
   viewKey() { return 'sdp.view.' + this.season.meta.n; },
   viewCutoff() {
     const shared = this.currentEpisode();

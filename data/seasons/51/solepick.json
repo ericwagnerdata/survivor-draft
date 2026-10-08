@@ -1,0 +1,27 @@
+{
+  "note": "Percent of fantasysurvivorgame.com players picking each castaway as Sole Survivor. One snapshot per time Eric sends them; afterEpisode keeps rewound views spoiler-safe.",
+  "snapshots": [
+    {
+      "date": "2026-10-07",
+      "afterEpisode": 2,
+      "pct": {
+        "Alexis Levine": 10.22,
+        "Carter Krull": 12.86,
+        "Patt Cannaday": 5.74,
+        "Devin Way": 5.27,
+        "Aaliyah Puglia": 4.26,
+        "Brady Booker": 2.33,
+        "Cristian Chavez": 2.06,
+        "Ana Sani": 1.33,
+        "Eric Macksoud": 2.39,
+        "Angelica \"Jelly\" Loblack": 9.56,
+        "Jenna Doore": 5.45,
+        "Danny \"Kilby\" Kilby": 1.96,
+        "Kristin Flickinger": 4.09,
+        "Lewis Kelly": 2.25,
+        "Linnea Capobianco": 6.6,
+        "Maggie Nestor": 3.07
+      }
+    }
+  ]
+}
