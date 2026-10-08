@@ -590,15 +590,4 @@ body.watch .watch-exit { display: block; position: fixed; bottom: 10px; right: 1
 .reveal-select option { background: #1A1A1A; color: #F0E6D3; }
 
 /* Crowd Sole Survivor pick % */
-.left-meta { display: inline-flex; align-items: center; gap: 4px; }
-.sole-pct { font-size: 9px; color: var(--gold); white-space: nowrap; }
 .card-sole { font-size: 10px; color: var(--gold); margin-top: 2px; }
-.sole-table { table-layout: fixed; width: 100%; }
-.sole-table td:first-child, .sole-table th:first-child { text-align: left; white-space: normal; width: 45%; }
-.sole-table th:nth-child(2), .sole-team { width: 18%; text-align: left !important; }
-.sole-team.eric { color: var(--eric); } .sole-team.kris { color: var(--kris); } .sole-team.kelly { color: var(--kelly); }
-.sole-bar-cell { position: relative; text-align: left !important; }
-.sole-bar { display: inline-block; height: 8px; background: var(--gold); opacity: 0.6; border-radius: 2px; vertical-align: middle; max-width: calc(100% - 52px); }
-.sole-val { margin-left: 6px; font-size: 11px; vertical-align: middle; }
-.sole-out td { opacity: 0.45; }
-@media (max-width: 480px) { body.watch .sole-pct, .draft-board.left .sole-pct { font-size: 8px; } }
