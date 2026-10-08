@@ -1,6 +1,6 @@
 {
   "season": 51,
-  "currentEpisode": 1,
+  "currentEpisode": 2,
   "episodes": [
     {
       "episode": 1,
@@ -88,6 +88,83 @@
         ],
         "votes_against": {
           "Aaliyah Puglia": 6
+        }
+      }
+    },
+    {
+      "episode": 2,
+      "title": "Weaponized Honesty",
+      "airDate": "2026-09-30",
+      "eliminated": [
+        "Ana Sani"
+      ],
+      "scores": {
+        "Aaliyah Puglia": 1,
+        "Alexis Levine": 0,
+        "Ana Sani": 6,
+        "Angelica \"Jelly\" Loblack": 7,
+        "Brady Booker": 5,
+        "Carter Krull": 0,
+        "Cristian Chavez": 2,
+        "Danny \"Kilby\" Kilby": 6,
+        "Devin Way": 6,
+        "Eric Macksoud": 0,
+        "Jenna Doore": 5,
+        "Kristin Flickinger": 0,
+        "Lewis Kelly": 5,
+        "Linnea Capobianco": 0,
+        "Maggie Nestor": 5,
+        "Mike Pinsky": 5,
+        "Ori Jean-Charles": 1,
+        "Patt Cannaday": 7,
+        "Rob Antonson": 0,
+        "Sharonda Cox": 0,
+        "Thien An Nguyen": 5
+      },
+      "events": {
+        "tribe_reward": [
+          "Thien An Nguyen",
+          "Angelica \"Jelly\" Loblack",
+          "Brady Booker",
+          "Danny \"Kilby\" Kilby",
+          "Devin Way",
+          "Jenna Doore",
+          "Lewis Kelly",
+          "Maggie Nestor",
+          "Mike Pinsky",
+          "Patt Cannaday"
+        ],
+        "tribe_immunity": [
+          "Thien An Nguyen",
+          "Angelica \"Jelly\" Loblack",
+          "Brady Booker",
+          "Danny \"Kilby\" Kilby",
+          "Devin Way",
+          "Jenna Doore",
+          "Lewis Kelly",
+          "Maggie Nestor",
+          "Mike Pinsky",
+          "Patt Cannaday"
+        ],
+        "water_well": [
+          "Angelica \"Jelly\" Loblack",
+          "Cristian Chavez",
+          "Devin Way",
+          "Ori Jean-Charles",
+          "Patt Cannaday"
+        ],
+        "make_fire": [
+          "Danny \"Kilby\" Kilby",
+          "Patt Cannaday"
+        ],
+        "find_food": [
+          "Cristian Chavez"
+        ],
+        "gain_idol": [
+          "Angelica \"Jelly\" Loblack"
+        ],
+        "votes_against": {
+          "Ana Sani": 6
         }
       }
     }
