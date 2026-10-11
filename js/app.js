@@ -387,25 +387,28 @@ function episodeBreakdown(epNum) {
   // Per-castaway totals grouped by team, with a check against the events.
   const computed = events ? DataStore.computeScoresFromEvents(events, prior) : null;
   const elim = new Set(Array.isArray(ep.eliminated) ? ep.eliminated : []);
+  const seasonTo = name => eps.filter(e => e.episode <= epNum)
+    .reduce((a, e) => a + (Number(e.scores && e.scores[name]) || 0), 0);
   const teamRows = DRAFTERS.map(d => {
     const team = DataStore.playersByDrafter(d)
-      .map(p => ({ p, pts: Number(ep.scores && ep.scores[p.name]) || 0 }))
-      .sort((a, b) => b.pts - a.pts);
+      .map(p => ({ p, pts: Number(ep.scores && ep.scores[p.name]) || 0, season: seasonTo(p.name) }))
+      .sort((a, b) => b.pts - a.pts || b.season - a.season);
     const sum = team.reduce((a, x) => a + x.pts, 0);
-    const rows = team.map(({ p, pts }) => {
+    const seasonSum = team.reduce((a, x) => a + x.season, 0);
+    const rows = team.map(({ p, pts, season }) => {
       const off = computed && (computed[p.name] || 0) !== pts;
       const quitNow = Array.isArray(ep.quit) && ep.quit.includes(p.name);
       const tag = elim.has(p.name) ? ` <span class="event-pts">${quitNow ? 'quit' : 'voted out'}</span>` : (prior.has(p.name) ? ' <span class="event-pts">out</span>' : '');
-      return `<tr${off ? ' class="bd-off" title="Events add up to ' + (computed[p.name] || 0) + '"' : ''}><td>${esc(p.name)}${tag}${off ? ' &#9888;' : ''}</td><td>${pts}</td></tr>`;
+      return `<tr${off ? ' class="bd-off" title="Events add up to ' + (computed[p.name] || 0) + '"' : ''}><td>${esc(p.name)}${tag}${off ? ' &#9888;' : ''}</td><td>${pts}</td><td>${season}</td></tr>`;
     }).join('');
-    return `<tr class="bd-team ${d.toLowerCase()}"><th>${esc(d)}</th><th>${sum}</th></tr>${rows}`;
+    return `<tr class="bd-team ${d.toLowerCase()}"><th>${esc(d)}</th><th>${sum}</th><th>${seasonSum}</th></tr>${rows}`;
   }).join('');
 
   return `
     <div class="avail-label" style="margin-top:22px">Episode breakdown</div>
     <div class="filter-row">${eps.map(e => `<button class="filter-btn${e.episode === epNum ? ' active' : ''}" data-bd-ep="${e.episode}">Ep ${e.episode}</button>`).join('')}</div>
     ${eventsTable}
-    <div class="stats-table-wrap"><table class="stats-table bd-totals"><thead><tr><th>Castaway</th><th>Points</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
+    <div class="stats-table-wrap"><table class="stats-table bd-totals"><thead><tr><th>Castaway</th><th>Ep ${esc(epNum)}</th><th>Season</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
 }
 
 function renderStats() {
