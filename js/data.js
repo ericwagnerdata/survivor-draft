@@ -235,10 +235,11 @@ const DataStore = {
     const eps = this.visibleEpisodes().slice().sort((a, b) => a.episode - b.episode);
     for (const ep of eps) {
       if (Array.isArray(ep.eliminated) && ep.eliminated.includes(playerName)) {
-        return { eliminated: true, episode: ep.episode };
+        const quit = Array.isArray(ep.quit) && ep.quit.includes(playerName);
+        return { eliminated: true, episode: ep.episode, quit };
       }
     }
-    return { eliminated: false, episode: null };
+    return { eliminated: false, episode: null, quit: false };
   },
 
   playersRemaining(drafter) {

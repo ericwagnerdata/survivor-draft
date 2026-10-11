@@ -74,7 +74,7 @@ function photoCard(p) {
   const elim = DataStore.eliminationInfo(p.name);
   const elimClass = elim.eliminated ? ' eliminated' : '';
   const elimTag = elim.eliminated
-    ? `<div class="elim-tag">Out, episode ${esc(elim.episode)}</div>`
+    ? `<div class="elim-tag">${elim.quit ? 'Quit' : 'Out'}, episode ${esc(elim.episode)}</div>`
     : '';
   const drafterBadge = p.drafter
     ? `<span class="drafter-badge ${drafterClass}">${esc(p.drafter)}</span>`
@@ -120,7 +120,7 @@ function renderDraft() {
           <div class="draft-pick-name">${esc(p.name)}</div>
           ${tribeBadge(p.tribe, 'tribe-badge')}
         </div>
-        <div class="draft-pick-num">${out ? 'Out ep ' + esc(out) : '#' + esc(p.pick)}</div>
+        <div class="draft-pick-num">${out ? (DataStore.eliminationInfo(p.name).quit ? 'Quit ep ' : 'Out ep ') + esc(out) : '#' + esc(p.pick)}</div>
       </div>`;
 
   // Who's left card: first name (or nickname) on one line, surname under it.
@@ -134,7 +134,7 @@ function renderDraft() {
       <div class="left-card${out ? ' out' : ''}">
         <div class="left-photo"><img src="${esc(p.photo)}" alt="${esc(p.name)}" loading="lazy"></div>
         <div class="left-name"><span class="left-first">${esc(first)}</span><span class="left-last">${esc(last)}</span></div>
-        ${out ? `<span class="left-out">Out ep ${esc(out)}</span>` : tribeBadge(p.tribe, 'tribe-badge')}
+        ${out ? `<span class="left-out">${DataStore.eliminationInfo(p.name).quit ? 'Quit' : 'Out'} ep ${esc(out)}</span>` : tribeBadge(p.tribe, 'tribe-badge')}
       </div>`;
   };
 
@@ -394,7 +394,8 @@ function episodeBreakdown(epNum) {
     const sum = team.reduce((a, x) => a + x.pts, 0);
     const rows = team.map(({ p, pts }) => {
       const off = computed && (computed[p.name] || 0) !== pts;
-      const tag = elim.has(p.name) ? ' <span class="event-pts">voted out</span>' : (prior.has(p.name) ? ' <span class="event-pts">out</span>' : '');
+      const quitNow = Array.isArray(ep.quit) && ep.quit.includes(p.name);
+      const tag = elim.has(p.name) ? ` <span class="event-pts">${quitNow ? 'quit' : 'voted out'}</span>` : (prior.has(p.name) ? ' <span class="event-pts">out</span>' : '');
       return `<tr${off ? ' class="bd-off" title="Events add up to ' + (computed[p.name] || 0) + '"' : ''}><td>${esc(p.name)}${tag}${off ? ' &#9888;' : ''}</td><td>${pts}</td></tr>`;
     }).join('');
     return `<tr class="bd-team ${d.toLowerCase()}"><th>${esc(d)}</th><th>${sum}</th></tr>${rows}`;
@@ -537,7 +538,7 @@ function renderTeam(drafter) {
       <div class="card-occupation">${esc(p.occupation)}</div>
       <div class="card-seasons">${esc(p.seasons)}</div>
       <div class="badge-row">${tribeBadge(p.tribe, 'tribe-badge')}</div>
-      ${elim.eliminated ? `<div class="elim-tag">Out, episode ${esc(elim.episode)}</div>` : ''}
+      ${elim.eliminated ? `<div class="elim-tag">${elim.quit ? 'Quit' : 'Out'}, episode ${esc(elim.episode)}</div>` : ''}
       <div class="pick-num">Pick ${esc(p.pick)}</div>
     </div>`;
   }).join('');
