@@ -1,6 +1,6 @@
 {
   "season": 51,
-  "currentEpisode": 2,
+  "currentEpisode": 3,
   "episodes": [
     {
       "episode": 1,
@@ -165,6 +165,82 @@
         ],
         "votes_against": {
           "Ana Sani": 6
+        }
+      }
+    },
+    {
+      "episode": 3,
+      "title": "What I'm Smellin' Is Stinky",
+      "airDate": "2026-10-07",
+      "eliminated": [
+        "Patt Cannaday",
+        "Rob Antonson"
+      ],
+      "scores": {
+        "Aaliyah Puglia": 1,
+        "Alexis Levine": 5,
+        "Ana Sani": 1,
+        "Angelica \"Jelly\" Loblack": 0,
+        "Brady Booker": 1,
+        "Carter Krull": 1,
+        "Cristian Chavez": 6,
+        "Danny \"Kilby\" Kilby": 0,
+        "Devin Way": 3,
+        "Eric Macksoud": 5,
+        "Jenna Doore": 0,
+        "Kristin Flickinger": 6,
+        "Lewis Kelly": 1,
+        "Linnea Capobianco": 7,
+        "Maggie Nestor": 0,
+        "Mike Pinsky": 0,
+        "Ori Jean-Charles": 5,
+        "Patt Cannaday": 6,
+        "Rob Antonson": 0,
+        "Sharonda Cox": 6,
+        "Thien An Nguyen": 0
+      },
+      "events": {
+        "tribe_reward": [
+          "Alexis Levine",
+          "Cristian Chavez",
+          "Eric Macksoud",
+          "Kristin Flickinger",
+          "Linnea Capobianco",
+          "Ori Jean-Charles",
+          "Sharonda Cox"
+        ],
+        "tribe_immunity": [
+          "Alexis Levine",
+          "Cristian Chavez",
+          "Eric Macksoud",
+          "Kristin Flickinger",
+          "Linnea Capobianco",
+          "Ori Jean-Charles",
+          "Sharonda Cox"
+        ],
+        "tree_mail": [
+          "Devin Way",
+          "Linnea Capobianco"
+        ],
+        "water_well": [
+          "Cristian Chavez",
+          "Devin Way",
+          "Kristin Flickinger",
+          "Linnea Capobianco",
+          "Sharonda Cox"
+        ],
+        "find_clue": [
+          "Lewis Kelly"
+        ],
+        "gain_idol": [
+          "Carter Krull"
+        ],
+        "gain_advantage": [
+          "Brady Booker",
+          "Devin Way"
+        ],
+        "votes_against": {
+          "Patt Cannaday": 6
         }
       }
     }
