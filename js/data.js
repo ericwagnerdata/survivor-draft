@@ -8,7 +8,7 @@ const DataStore = {
 
   async loadManifest() {
     if (this.manifest) return this.manifest;
-    const res = await fetch('data/manifest.json');
+    const res = await fetch('data/manifest.json', { cache: 'no-cache' });
     if (!res.ok) throw new Error('Could not load manifest.json');
     this.manifest = await res.json();
     return this.manifest;
@@ -22,22 +22,23 @@ const DataStore = {
 
     const base = 'data/seasons/' + meta.n + '/';
     const [players, results, scoring, solepick] = await Promise.all([
-      fetch(base + 'players.json').then(r => {
+      fetch(base + 'players.json', { cache: 'no-cache' }).then(r => {
         if (!r.ok) throw new Error('Could not load players.json for season ' + meta.n);
         return r.json();
       }),
-      fetch(base + 'results.json').then(r => {
+      fetch(base + 'results.json', { cache: 'no-cache' }).then(r => {
         if (!r.ok) throw new Error('Could not load results.json for season ' + meta.n);
         return r.json();
       }),
       // scoring.json is optional: a season without it falls back to the legacy
       // raw-number entry form, so a missing file must not break the load.
-      fetch(base + 'scoring.json').then(r => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(base + 'scoring.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
       // solepick.json is optional: crowd Sole Survivor pick % snapshots.
-      fetch(base + 'solepick.json').then(r => (r.ok ? r.json() : null)).catch(() => null)
+      fetch(base + 'solepick.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
     ]);
 
     this.season = { meta, players, results, scoring, solepick };
+    this.dropStaleLocalResults();
     return this.season;
   },
 
@@ -111,6 +112,22 @@ const DataStore = {
     }
     return (this.season.results && Array.isArray(this.season.results.episodes))
       ? this.season.results.episodes : [];
+  },
+
+  // A saved working copy (from the commissioner form) wins over the published
+  // results, so once the published file has caught up (as many episodes and an
+  // equal or later cutoff) the old copy would freeze this browser on an older
+  // episode. Drop it then.
+  dropStaleLocalResults() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(this.resultsKey()) || 'null'); } catch (e) { saved = null; }
+    if (!saved || !Array.isArray(saved.episodes)) return;
+    const pub = this.season.results || {};
+    const pubEps = Array.isArray(pub.episodes) ? pub.episodes : [];
+    const maxEp = eps => eps.reduce((m, e) => Math.max(m, e.episode || 0), 0);
+    const caughtUp = maxEp(pubEps) >= maxEp(saved.episodes)
+      && (pub.currentEpisode || 0) >= (saved.currentEpisode || 0);
+    if (caughtUp) this.clearLocalResults();
   },
 
   // True when a local working copy of results exists for the loaded season.
