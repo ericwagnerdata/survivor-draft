@@ -1,6 +1,6 @@
 {
   "season": 51,
-  "currentEpisode": 3,
+  "currentEpisode": 4,
   "episodes": [
     {
       "episode": 1,
@@ -246,6 +246,88 @@
       "quit": [
         "Rob Antonson"
       ]
+    },
+    {
+      "episode": 4,
+      "title": "",
+      "airDate": "2026-10-14",
+      "eliminated": [
+        "Jenna Doore"
+      ],
+      "scores": {
+        "Aaliyah Puglia": 1,
+        "Alexis Levine": 2,
+        "Ana Sani": 1,
+        "Angelica \"Jelly\" Loblack": 0,
+        "Brady Booker": 6,
+        "Carter Krull": 7,
+        "Cristian Chavez": 5,
+        "Danny \"Kilby\" Kilby": 5,
+        "Devin Way": 0,
+        "Eric Macksoud": 5,
+        "Jenna Doore": 4,
+        "Kristin Flickinger": 6,
+        "Lewis Kelly": 5,
+        "Linnea Capobianco": 5,
+        "Maggie Nestor": 7,
+        "Mike Pinsky": 6,
+        "Ori Jean-Charles": 0,
+        "Patt Cannaday": 1,
+        "Rob Antonson": 1,
+        "Sharonda Cox": 5,
+        "Thien An Nguyen": 6
+      },
+      "events": {
+        "tribe_reward": [
+          "Thien An Nguyen",
+          "Brady Booker",
+          "Carter Krull",
+          "Cristian Chavez",
+          "Danny \"Kilby\" Kilby",
+          "Eric Macksoud",
+          "Kristin Flickinger",
+          "Lewis Kelly",
+          "Linnea Capobianco",
+          "Maggie Nestor",
+          "Mike Pinsky",
+          "Sharonda Cox"
+        ],
+        "tribe_immunity": [
+          "Thien An Nguyen",
+          "Brady Booker",
+          "Carter Krull",
+          "Cristian Chavez",
+          "Danny \"Kilby\" Kilby",
+          "Eric Macksoud",
+          "Kristin Flickinger",
+          "Lewis Kelly",
+          "Linnea Capobianco",
+          "Maggie Nestor",
+          "Mike Pinsky",
+          "Sharonda Cox"
+        ],
+        "tree_mail": [
+          "Alexis Levine",
+          "Maggie Nestor"
+        ],
+        "water_well": [
+          "Thien An Nguyen",
+          "Brady Booker",
+          "Carter Krull",
+          "Kristin Flickinger",
+          "Maggie Nestor",
+          "Mike Pinsky"
+        ],
+        "make_fire": [
+          "Alexis Levine"
+        ],
+        "find_food": [
+          "Carter Krull"
+        ],
+        "votes_against": {
+          "Jenna Doore": 4
+        }
+      }
     }
   ]
 }
