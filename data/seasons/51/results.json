@@ -1,6 +1,6 @@
 {
   "season": 51,
-  "currentEpisode": 4,
+  "currentEpisode": 5,
   "episodes": [
     {
       "episode": 1,
@@ -326,6 +326,75 @@
         ],
         "votes_against": {
           "Jenna Doore": 4
+        }
+      }
+    },
+    {
+      "episode": 5,
+      "title": "",
+      "airDate": "2026-10-21",
+      "eliminated": [
+        "Alexis Levine",
+        "Linnea Capobianco"
+      ],
+      "scores": {
+        "Aaliyah Puglia": 1,
+        "Alexis Levine": 3,
+        "Ana Sani": 1,
+        "Angelica \"Jelly\" Loblack": 0,
+        "Brady Booker": 7,
+        "Carter Krull": 5,
+        "Cristian Chavez": 0,
+        "Danny \"Kilby\" Kilby": 2,
+        "Devin Way": 0,
+        "Eric Macksoud": 0,
+        "Jenna Doore": 1,
+        "Kristin Flickinger": 5,
+        "Lewis Kelly": 2,
+        "Linnea Capobianco": 4,
+        "Maggie Nestor": 8,
+        "Mike Pinsky": 5,
+        "Ori Jean-Charles": 0,
+        "Patt Cannaday": 1,
+        "Rob Antonson": 1,
+        "Sharonda Cox": 0,
+        "Thien An Nguyen": 5
+      },
+      "events": {
+        "tribe_reward": [
+          "Thien An Nguyen",
+          "Brady Booker",
+          "Carter Krull",
+          "Kristin Flickinger",
+          "Maggie Nestor",
+          "Mike Pinsky"
+        ],
+        "tribe_immunity": [
+          "Thien An Nguyen",
+          "Brady Booker",
+          "Carter Krull",
+          "Kristin Flickinger",
+          "Maggie Nestor",
+          "Mike Pinsky"
+        ],
+        "tree_mail": [
+          "Brady Booker",
+          "Maggie Nestor"
+        ],
+        "water_well": [
+          "Brady Booker",
+          "Maggie Nestor"
+        ],
+        "play_idol": [
+          "Danny \"Kilby\" Kilby",
+          "Lewis Kelly"
+        ],
+        "gain_advantage": [
+          "Maggie Nestor"
+        ],
+        "votes_against": {
+          "Alexis Levine": 3,
+          "Linnea Capobianco": 4
         }
       }
     }
