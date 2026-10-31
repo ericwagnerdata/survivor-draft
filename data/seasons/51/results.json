@@ -1,6 +1,6 @@
 {
   "season": 51,
-  "currentEpisode": 5,
+  "currentEpisode": 6,
   "episodes": [
     {
       "episode": 1,
@@ -395,6 +395,87 @@
         "votes_against": {
           "Alexis Levine": 3,
           "Linnea Capobianco": 4
+        }
+      }
+    },
+    {
+      "episode": 6,
+      "title": "",
+      "airDate": "2026-10-28",
+      "eliminated": [
+        "Ori Jean-Charles"
+      ],
+      "scores": {
+        "Aaliyah Puglia": 1,
+        "Alexis Levine": 1,
+        "Ana Sani": 1,
+        "Angelica \"Jelly\" Loblack": 0,
+        "Brady Booker": 3,
+        "Carter Krull": 3,
+        "Cristian Chavez": 3,
+        "Danny \"Kilby\" Kilby": 3,
+        "Devin Way": 0,
+        "Eric Macksoud": 3,
+        "Jenna Doore": 1,
+        "Kristin Flickinger": 9,
+        "Lewis Kelly": 3,
+        "Linnea Capobianco": 1,
+        "Maggie Nestor": 3,
+        "Mike Pinsky": 5,
+        "Ori Jean-Charles": 5,
+        "Patt Cannaday": 1,
+        "Rob Antonson": 1,
+        "Sharonda Cox": 6,
+        "Thien An Nguyen": 3
+      },
+      "events": {
+        "tribe_immunity": [
+          "Thien An Nguyen",
+          "Brady Booker",
+          "Carter Krull",
+          "Cristian Chavez",
+          "Danny \"Kilby\" Kilby",
+          "Eric Macksoud",
+          "Kristin Flickinger",
+          "Lewis Kelly",
+          "Maggie Nestor",
+          "Mike Pinsky",
+          "Sharonda Cox"
+        ],
+        "tree_mail": [
+          "Mike Pinsky",
+          "Sharonda Cox"
+        ],
+        "water_well": [
+          "Kristin Flickinger",
+          "Mike Pinsky"
+        ],
+        "make_fire": [
+          "Kristin Flickinger"
+        ],
+        "find_food": [
+          "Kristin Flickinger"
+        ],
+        "exile": [
+          "Kristin Flickinger"
+        ],
+        "summit": [
+          "Kristin Flickinger",
+          "Ori Jean-Charles",
+          "Sharonda Cox"
+        ],
+        "gain_idol": [
+          "Kristin Flickinger"
+        ],
+        "gain_advantage": [
+          "Ori Jean-Charles",
+          "Sharonda Cox"
+        ],
+        "shot_in_dark": [
+          "Ori Jean-Charles"
+        ],
+        "votes_against": {
+          "Ori Jean-Charles": 2
         }
       }
     }

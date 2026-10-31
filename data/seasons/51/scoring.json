@@ -98,6 +98,12 @@
       "oncePerEpisode": true
     },
     {
+      "id": "summit",
+      "label": "Go to a Summit",
+      "points": 1,
+      "group": "Gameplay"
+    },
+    {
       "id": "merge",
       "label": "Made the Merge",
       "points": 2,
