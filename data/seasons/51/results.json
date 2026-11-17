@@ -1,6 +1,6 @@
 {
   "season": 51,
-  "currentEpisode": 7,
+  "currentEpisode": 8,
   "episodes": [
     {
       "episode": 1,
@@ -548,6 +548,73 @@
         ],
         "votes_against": {
           "Brady Booker": 9
+        }
+      }
+    },
+    {
+      "episode": 8,
+      "title": "",
+      "airDate": "2026-11-11",
+      "eliminated": [
+        "Kristin Flickinger",
+        "Danny \"Kilby\" Kilby"
+      ],
+      "scores": {
+        "Aaliyah Puglia": 1,
+        "Alexis Levine": 1,
+        "Ana Sani": 1,
+        "Angelica \"Jelly\" Loblack": 4,
+        "Brady Booker": 1,
+        "Carter Krull": 0,
+        "Cristian Chavez": 4,
+        "Danny \"Kilby\" Kilby": 1,
+        "Devin Way": 0,
+        "Eric Macksoud": 0,
+        "Jenna Doore": 1,
+        "Kristin Flickinger": 4,
+        "Lewis Kelly": 6,
+        "Linnea Capobianco": 1,
+        "Maggie Nestor": 0,
+        "Mike Pinsky": 0,
+        "Ori Jean-Charles": 1,
+        "Patt Cannaday": 1,
+        "Rob Antonson": 1,
+        "Sharonda Cox": 5,
+        "Thien An Nguyen": 0
+      },
+      "events": {
+        "tribe_reward": [
+          "Angelica \"Jelly\" Loblack",
+          "Kristin Flickinger",
+          "Lewis Kelly",
+          "Sharonda Cox"
+        ],
+        "tribe_immunity": [
+          "Lewis Kelly",
+          "Sharonda Cox"
+        ],
+        "journey_challenge": [
+          "Cristian Chavez"
+        ],
+        "tree_mail": [
+          "Lewis Kelly"
+        ],
+        "journey": [
+          "Cristian Chavez"
+        ],
+        "play_idol": [
+          "Angelica \"Jelly\" Loblack"
+        ],
+        "gain_advantage": [
+          "Cristian Chavez"
+        ],
+        "shot_in_dark": [
+          "Cristian Chavez",
+          "Kristin Flickinger"
+        ],
+        "votes_against": {
+          "Kristin Flickinger": 1,
+          "Danny \"Kilby\" Kilby": 1
         }
       }
     }
